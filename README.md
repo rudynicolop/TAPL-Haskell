@@ -1,2 +1,2 @@
 # TAPL-Haskell
-Haskell implementations of TAPL type systems
+Haskell implementations of TAPL type systems.
