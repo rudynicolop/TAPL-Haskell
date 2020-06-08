@@ -1,14 +1,24 @@
 module Eval where
 
 import           AST
--- import           Control.Monad.Trans.FastFresh as F
-import qualified Data.Set as S
+import qualified Control.Monad.Trans.State.Lazy as ST
+import qualified Data.Set                       as S
 
 -- set of free variables in an expression
 fv :: Expr -> S.Set String
 fv (Var x)     = S.singleton x
 fv (Lam x e)   = e |> fv |> S.delete x
 fv (App e1 e2) = S.union (fv e1) (fv e2)
+
+type FreshName = ST.State Integer String
+
+-- fresh ~:: Integer -> (String, Integer)
+fresh :: FreshName
+-- fresh = ST.state $ \ n -> ("x"++(show n),n+1)
+fresh = do
+  n <- ST.get
+  ST.put $ n + 1
+  return $ n |> show |> (++) "x"
 
 -- TODO: capture avoiding substitution
 sub :: Expr -> Expr -> String -> Expr
@@ -21,6 +31,18 @@ sub (Lam y e) s x
   | y /= x && not isMem = Lam y (sub e s x)
   | y /= x && isMem = s --TODO: need to use a fresh monad for name generation...seems tricky...
   where isMem = s |> fv |> S.member y
+
+{-
+StateT s m a ~= s -> m (a,s)
+
+State s a = StateT s Identity a ~= s -> (a,s)
+
+FreshT = StateT FreshState m a = StateT Integer m a ~= Integer -> m (a,Integer)
+
+Fresh = FreshT Identity a = StateT FreshState Identity a = State FreshState a = State Integer a ~= Integer -> (a,Integer)
+
+-}
+
 
 -- initially all used names are names in the given program
 -- => initial state is set of names in given program
