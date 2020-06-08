@@ -24,14 +24,6 @@ freshName = do
 
 type FreshExpr = Fresh Expr
 
--- probably unnecessary
--- -- composes the counters of two states
--- composeFresh :: FreshName -> FreshName -> FreshName
--- composeFresh s1 s2 = do
---   n1 <- ST.get s1
---   n2 <- ST.get s2
---   ST.put $ n1 + n2
-
 -- TODO: capture avoiding substitution
 subf :: FreshExpr -> FreshExpr -> String -> FreshExpr
 subf fe fs x = do
@@ -47,13 +39,16 @@ subf fe fs x = do
     e1' <- sub e1 s x
     e2' <- sub e2 s x
     return $ App e1' e2'
-  sub (Lam y e) s x
-    | y == x = return $ Lam y e
+  sub (Lam y body) s x
+    | y == x = return $ Lam y body
     | y /= x && not isMem = do
-      e' <- sub e s x
-      return $ Lam y e'
-    | y /= x && isMem = return s
-      -- TODO! return s
+      body' <- sub body s x
+      return $ Lam y body'
+    | y /= x && isMem = do
+      z <- freshName
+      body' <- sub body (Var z) y
+      body'' <- sub body' s x
+      return $ Lam z body''
     where
     isMem :: Bool
     isMem = s |> fv |> S.member y
@@ -68,14 +63,6 @@ FreshT = StateT FreshState m a = StateT Integer m a ~= Integer -> m (a,Integer)
 Fresh = FreshT Identity a = StateT FreshState Identity a = State FreshState a = State Integer a ~= Integer -> (a,Integer)
 
 -}
-
-
--- initially all used names are names in the given program
--- => initial state is set of names in given program
--- when performing substitution, needs to "generate" a fresh name
--- so state also includes the next available name,...maybe...
--- every transformation will return the next available name,
--- update the set of used names, and the next available name
 
 -- normal order reduction
 step :: Expr -> Maybe Expr
