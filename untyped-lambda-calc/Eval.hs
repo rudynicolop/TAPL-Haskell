@@ -10,27 +10,53 @@ fv (Var x)     = S.singleton x
 fv (Lam x e)   = e |> fv |> S.delete x
 fv (App e1 e2) = S.union (fv e1) (fv e2)
 
-type FreshName = ST.State Integer String
+type Fresh a = ST.State Integer a
+
+type FreshName = Fresh String
 
 -- fresh ~:: Integer -> (String, Integer)
-fresh :: FreshName
+freshName :: FreshName
 -- fresh = ST.state $ \ n -> ("x"++(show n),n+1)
-fresh = do
+freshName = do
   n <- ST.get
   ST.put $ n + 1
   return $ n |> show |> (++) "x"
 
+type FreshExpr = Fresh Expr
+
+-- probably unnecessary
+-- -- composes the counters of two states
+-- composeFresh :: FreshName -> FreshName -> FreshName
+-- composeFresh s1 s2 = do
+--   n1 <- ST.get s1
+--   n2 <- ST.get s2
+--   ST.put $ n1 + n2
+
 -- TODO: capture avoiding substitution
-sub :: Expr -> Expr -> String -> Expr
-sub (Var y) s x
-  | y == x = s
-  | y /= x = Var y
-sub (App e1 e2) s x = App (sub e1 s x) (sub e2 s x)
-sub (Lam y e) s x
-  | y == x = Lam y e
-  | y /= x && not isMem = Lam y (sub e s x)
-  | y /= x && isMem = s --TODO: need to use a fresh monad for name generation...seems tricky...
-  where isMem = s |> fv |> S.member y
+subf :: FreshExpr -> FreshExpr -> String -> FreshExpr
+subf fe fs x = do
+  e <- fe
+  s <- fs
+  sub e s x
+  where
+  sub :: Expr -> Expr -> String -> FreshExpr
+  sub (Var y) s x
+    | y == x = return s
+    | y /= x = return $ Var y
+  sub (App e1 e2) s x = do
+    e1' <- sub e1 s x
+    e2' <- sub e2 s x
+    return $ App e1' e2'
+  sub (Lam y e) s x
+    | y == x = return $ Lam y e
+    | y /= x && not isMem = do
+      e' <- sub e s x
+      return $ Lam y e'
+    | y /= x && isMem = return s
+      -- TODO! return s
+    where
+    isMem :: Bool
+    isMem = s |> fv |> S.member y
 
 {-
 StateT s m a ~= s -> m (a,s)
@@ -57,7 +83,7 @@ step (Var x) = Nothing
 step (Lam x e) = do
   e' <- step e
   return $ Lam x e'
-step (App (Lam x e1) e2) = return $ sub e1 e2 x
+step (App (Lam x e1) e2) = Nothing -- TODO: proper substitution return $ sub e1 e2 x
 step (App e1 e2) =
   case step e1 of
     Nothing -> do
