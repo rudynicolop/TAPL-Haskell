@@ -1,10 +1,10 @@
 module Main where
 
-import qualified Lexer as L
-import qualified Parser as P
-import AST
-import qualified Eval as E
-import Codec.Binary.UTF8.String (encode)
+import           AST
+import           Codec.Binary.UTF8.String (encode)
+import qualified Eval                     as E
+import qualified Lexer                    as L
+import qualified Parser                   as P
 
 main :: IO ()
 main = do
