@@ -1,5 +1,6 @@
 module Main where
 import           AST
+import           Eval
 import           Lexer
 import           Parser
 
