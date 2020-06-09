@@ -12,6 +12,7 @@ fv (App e1 e2) = S.union (fv e1) (fv e2)
 
 type Fresh a = ST.State Integer a
 
+-- ~ Integer -> (String,Integer)
 type FreshName = Fresh String
 
 -- fresh ~:: Integer -> (String, Integer)
@@ -22,36 +23,32 @@ freshName = do
   ST.put $ n + 1
   return $ n |> show |> (++) "x"
 
+-- ~ Integer -> (Expr,Integer)
 type FreshExpr = Fresh Expr
 
 -- TODO: capture avoiding substitution
-subf :: FreshExpr -> FreshExpr -> String -> FreshExpr
-subf fe fs x = do
-  e <- fe
-  s <- fs
-  sub e s x
+-- [sub x s e n] substitues s for x in e with state n
+sub :: String -> Expr -> Expr -> FreshExpr
+sub x s (Var y)
+  | y == x = return s
+  | y /= x = return $ Var y
+sub x s (App e1 e2) = do
+  e1' <- sub x s e1
+  e2' <- sub x s e2
+  return $ App e1' e2'
+sub x s (Lam y body)
+  | y == x = return $ Lam y body
+  | y /= x && not isMem = do
+    body' <- sub x s body
+    return $ Lam y body'
+  | y /= x && isMem = do
+    z <- freshName
+    body' <- sub y (Var z) body
+    body'' <- sub x s body'
+    return $ Lam z body''
   where
-  sub :: Expr -> Expr -> String -> FreshExpr
-  sub (Var y) s x
-    | y == x = return s
-    | y /= x = return $ Var y
-  sub (App e1 e2) s x = do
-    e1' <- sub e1 s x
-    e2' <- sub e2 s x
-    return $ App e1' e2'
-  sub (Lam y body) s x
-    | y == x = return $ Lam y body
-    | y /= x && not isMem = do
-      body' <- sub body s x
-      return $ Lam y body'
-    | y /= x && isMem = do
-      z <- freshName
-      body' <- sub body (Var z) y
-      body'' <- sub body' s x
-      return $ Lam z body''
-    where
-    isMem :: Bool
-    isMem = s |> fv |> S.member y
+  isMem :: Bool
+  isMem = s |> fv |> S.member y
 
 {-
 StateT s m a ~= s -> m (a,s)
@@ -64,16 +61,22 @@ Fresh = FreshT Identity a = StateT FreshState Identity a = State FreshState a = 
 
 -}
 
+-- ~ Integer -> Maybe (Expr,Integer)
+type FreshExprT = ST.StateT Integer Maybe Expr
+
 -- normal order reduction
-step :: Expr -> Maybe Expr
-step (Var x) = Nothing
+-- ~Expr -> Integer -> Maybe (Expr,Integer)
+step :: Expr -> FreshExprT
+step (Var _) = ST.StateT $ \ _ -> Nothing
 step (Lam x e) = do
   e' <- step e
   return $ Lam x e'
-step (App (Lam x e1) e2) = Nothing -- TODO: proper substitution return $ sub e1 e2 x
+step (App (Lam x e1) e2) = ST.StateT $ \n -> Just $ ST.runState (sub x e2 e1) n
 step (App e1 e2) =
-  case step e1 of
-    Nothing -> do
-      e2' <- step e2
-      return $ App e1 e2'
-    Just e1' -> return $ App e1' e2
+  ST.StateT $ \ n ->
+    case ST.runStateT (step e1) n of
+      Nothing ->
+        case ST.runStateT (step e2) n of
+          Nothing       -> Nothing
+          Just (e2',n') -> Just (App e1 e2',n')
+      Just (e1',n') -> Just (App e1' e2,n')
