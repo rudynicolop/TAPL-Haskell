@@ -10,4 +10,5 @@ main :: IO ()
 main = do
   putStrLn "Enter an Untyped Lambda Calculus program!"
   p <- getLine;
-  p |> lexx |> parse |> eval |> show |> putStrLn
+  p |> lexx |> parse |> eval
+  putStrLn "Done"

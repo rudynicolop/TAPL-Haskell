@@ -69,11 +69,13 @@ step (App e1 e2) =
       Just (e1',n') -> Just (App e1' e2,n')
 
 -- evaluates a lambda Calculus program to its normal form
-eval :: Expr -> Expr
-eval e = evalf 0 e
+eval :: Expr -> IO Expr
+eval e =
+  evalf 0 e
   where
-  evalf :: Integer -> Expr -> Expr
-  evalf n e =
+  evalf :: Integer -> Expr -> IO Expr
+  evalf n e = do
+    putStrLn $ show $ e
     case ST.runStateT (step e) n of
-      Nothing      -> e -- normal form
+      Nothing      -> return e -- normal form
       Just (e',n') -> evalf n' e'
