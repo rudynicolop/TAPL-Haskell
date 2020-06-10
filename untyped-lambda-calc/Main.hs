@@ -8,6 +8,6 @@ import           Parser
 
 main :: IO ()
 main = do
-  putStrLn "Enter an Untyped Lambda Calculus program!";
-  pgm <- getLine;
-  pgm |> lexx |> parse |> show |> putStrLn
+  putStrLn "Enter an Untyped Lambda Calculus program!"
+  p <- getLine;
+  p |> lexx |> parse |> eval |> show |> putStrLn

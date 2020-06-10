@@ -1,4 +1,4 @@
-module Eval where
+module Eval(eval) where
 
 import           AST
 import qualified Control.Monad.Trans.State.Lazy as ST
@@ -17,7 +17,6 @@ type FreshName = Fresh String
 
 -- fresh ~:: Integer -> (String, Integer)
 freshName :: FreshName
--- fresh = ST.state $ \ n -> ("x"++(show n),n+1)
 freshName = do
   n <- ST.get
   ST.put $ n + 1
@@ -26,7 +25,6 @@ freshName = do
 -- ~ Integer -> (Expr,Integer)
 type FreshExpr = Fresh Expr
 
--- TODO: capture avoiding substitution
 -- [sub x s e n] substitues s for x in e with state n
 sub :: String -> Expr -> Expr -> FreshExpr
 sub x s (Var y)
@@ -50,17 +48,6 @@ sub x s (Lam y body)
   isMem :: Bool
   isMem = s |> fv |> S.member y
 
-{-
-StateT s m a ~= s -> m (a,s)
-
-State s a = StateT s Identity a ~= s -> (a,s)
-
-FreshT = StateT FreshState m a = StateT Integer m a ~= Integer -> m (a,Integer)
-
-Fresh = FreshT Identity a = StateT FreshState Identity a = State FreshState a = State Integer a ~= Integer -> (a,Integer)
-
--}
-
 -- ~ Integer -> Maybe (Expr,Integer)
 type FreshExprT = ST.StateT Integer Maybe Expr
 
@@ -80,3 +67,13 @@ step (App e1 e2) =
           Nothing       -> Nothing
           Just (e2',n') -> Just (App e1 e2',n')
       Just (e1',n') -> Just (App e1' e2,n')
+
+-- evaluates a lambda Calculus program to its normal form
+eval :: Expr -> Expr
+eval e = evalf 0 e
+  where
+  evalf :: Integer -> Expr -> Expr
+  evalf n e =
+    case ST.runStateT (step e) n of
+      Nothing      -> e -- normal form
+      Just (e',n') -> evalf n' e'
