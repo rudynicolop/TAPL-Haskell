@@ -1,6 +1,7 @@
 module Eval(eval) where
 
 import           AST
+import qualified Control.Monad.Trans.Class      as MT
 import qualified Control.Monad.Trans.State.Lazy as ST
 import qualified Data.Set                       as S
 
@@ -51,14 +52,19 @@ sub x s (Lam y body)
 -- ~ Integer -> Maybe (Expr,Integer)
 type FreshExprT = ST.StateT Integer Maybe Expr
 
+hoistState :: Monad m => ST.State s a -> ST.StateT s m a
+hoistState = ST.state . ST.runState
+
+hoistFreshMaybe :: FreshExpr -> FreshExprT
+hoistFreshMaybe = hoistState
 -- normal order reduction
 -- ~Expr -> Integer -> Maybe (Expr,Integer)
 step :: Expr -> FreshExprT
-step (Var _) = ST.StateT $ \ _ -> Nothing
+step (Var _) = MT.lift Nothing
 step (Lam x e) = do
   e' <- step e
   return $ Lam x e'
-step (App (Lam x e1) e2) = ST.StateT $ \n -> Just $ ST.runState (sub x e2 e1) n
+step (App (Lam x e1) e2) = hoistFreshMaybe (sub x e2 e1)
 step (App e1 e2) =
   ST.StateT $ \ n ->
     case ST.runStateT (step e1) n of
