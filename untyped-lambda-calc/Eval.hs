@@ -57,6 +57,7 @@ hoistState = ST.state . ST.runState
 
 hoistFreshMaybe :: FreshExpr -> FreshExprT
 hoistFreshMaybe = hoistState
+
 -- normal order reduction
 -- ~Expr -> Integer -> Maybe (Expr,Integer)
 step :: Expr -> FreshExprT
@@ -64,15 +65,16 @@ step (Var _) = MT.lift Nothing
 step (Lam x e) = do
   e' <- step e
   return $ Lam x e'
-step (App (Lam x e1) e2) = hoistFreshMaybe (sub x e2 e1)
-step (App e1 e2) =
-  ST.StateT $ \ n ->
-    case ST.runStateT (step e1) n of
-      Nothing ->
-        case ST.runStateT (step e2) n of
-          Nothing       -> Nothing
-          Just (e2',n') -> Just (App e1 e2',n')
-      Just (e1',n') -> Just (App e1' e2,n')
+step (App (Lam x e1) e2) = hoistFreshMaybe $ sub x e2 e1
+step (App e1 e2) = do
+  n <- ST.get
+  case ST.runStateT (step e1) n of
+    Nothing -> do
+      e2' <- step e2
+      return $ App e1 e2'
+    Just (e1',n') -> do
+      ST.put n'
+      return (App e1' e2)
 
 -- evaluates a lambda Calculus program to its normal form
 eval :: Expr -> IO Expr
