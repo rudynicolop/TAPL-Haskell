@@ -9,7 +9,7 @@ tokens :-
 $white+ ;
 true {TRUE}
 false {FALSE}
-"0"	{ZERO}
+"Z"	{ZERO}
 succ {SUCC}
 pred {PRED}
 if {IF}

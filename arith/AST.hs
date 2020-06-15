@@ -10,7 +10,11 @@ data Term =
     | IfThenElse Term Term Term
     deriving Show
 
+data Nat = Z | S Nat deriving Show
+
+data VB = VTrue | VFalse deriving Show
+
 data Val =
-  VNum Int
-  | VBool Bool
+  VNum Nat
+  | VBool VB
   deriving Show
