@@ -23,6 +23,7 @@ else {L.ELSE}
 iszero {L.ISZERO}
 lparen {L.LPAREN}
 rparen {L.RPAREN}
+int    { L.NNUM $$ }
 %%
 
 Term : true { TTrue }
@@ -33,8 +34,9 @@ Term : true { TTrue }
 | pred Term { Pred $2 }
 | if Term then Term else Term { IfThenElse $2 $4 $6 }
 | lparen Term rparen { $2 }
+| int { genNatTerm $1 }
 
 {
 parseError :: L.Token -> a
-parseError _ = error "Parse error"
+parseError t = t |> show |> (++) "unexpected token " |> error
 }

@@ -2,28 +2,36 @@
 module Lexer (Token(..),P,evalP,lexer) where
 import Control.Monad.State
 import Control.Monad.Except
-import Data.Word
+import qualified Data.Word as W
+import AST
+import qualified Conversion as C
+import qualified Data.Char as DC
 }
+
+$digit = 0-9 -- digits
 
 tokens :-
 $white+ ;
-true {TRUE}
-false {FALSE}
-"Z"	{ZERO}
-succ {SUCC}
-pred {PRED}
-if {IF}
-then {THEN}
-else {ELSE}
-iszero {ISZERO}
-"(" {LPAREN}
-")" {RPAREN}
+$digit+ { \s -> NNUM $ read $ map (DC.chr . fromIntegral) s}
+true {\_ -> TRUE}
+false {\_ -> FALSE}
+"Z"	{\_ -> ZERO}
+succ {\_ -> SUCC}
+pred {\_ -> PRED}
+if {\_ -> IF}
+then {\_ -> THEN}
+else {\_ -> ELSE}
+iszero {\_ -> ISZERO}
+"(" {\_ -> LPAREN}
+")" {\_ -> RPAREN}
 
 {
+
 data Token =
     TRUE
     | FALSE
     | ZERO
+    | NNUM Integer
     | SUCC
     | PRED
     | IF
@@ -36,9 +44,9 @@ data Token =
     deriving (Eq,Show)
 
 -- byte stream, lexer input type
-type AlexInput = [Word8]
+type AlexInput = [W.Word8]
 -- gets the next byte to be lexed from the byte stream
-alexGetByte :: AlexInput -> Maybe (Word8,AlexInput)
+alexGetByte :: AlexInput -> Maybe (W.Word8,AlexInput)
 alexGetByte (b:bs) = Just (b,bs)
 alexGetByte []     = Nothing
 
@@ -52,26 +60,26 @@ alexInputPrevChar = undefined
 -- the current token and the rest of the stream
 type P a = StateT AlexInput (Either String) a
 
-evalP::P a -> AlexInput -> Either String a
+evalP :: P a -> AlexInput -> Either String a
 evalP = evalStateT
 
 -- maps the input to a token stream when repeatly iterated
-readToken::P Token
+readToken :: P Token
 readToken = do
-    s <- get
-    case alexScan s 0 of
-        AlexEOF -> return EOF -- done lexing
-        AlexError _ -> throwError "!Lexical error" -- screw up
-        AlexSkip inp' _ -> do
-            put inp'  -- put the rest of the byte stream in the state
-            readToken -- recurse
-        AlexToken inp' _ tk -> do
-            put inp' -- put the rest of the byte stream in the state
-            return tk -- ignores the () and makes tk the value
+  s <- get
+  case alexScan s 0 of
+    AlexEOF -> return EOF -- done lexing
+    AlexError _ -> throwError "!Lexical error" -- screwed up
+    AlexSkip inp _ -> do
+      put inp  -- put the rest of the byte stream in the state
+      readToken -- recurse
+    AlexToken inp len tk -> do
+      put inp -- put the rest of the byte stream in the state
+      return $ tk (take len s)
 
-lexer::(Token -> P a)->P a
+lexer :: (Token -> P a) -> P a
 lexer cont = do
-    -- passes the next token into the continuation
-    token <- readToken
-    cont token
+  -- passes the next token into the continuation
+  token <- readToken
+  cont token
 }
