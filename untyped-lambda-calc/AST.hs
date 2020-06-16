@@ -8,6 +8,21 @@ data Token =
   | DOT
   | LPAREN
   | RPAREN
+  | NAT Integer
+  | SUCC
+  | ID
+  | ADD
+  | MULT
+  | PRED
+  | SUB
+  | TRUE
+  | FALSE
+  | COND
+  | AND
+  | OR
+  | ISZERO
+  | EQ
+  | Y
   deriving (Show)
 
 data Expr =

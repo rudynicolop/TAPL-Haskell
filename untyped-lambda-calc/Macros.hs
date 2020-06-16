@@ -39,13 +39,13 @@ n :: Expr
 n = Var sn
 
 mId :: Expr
-mId = Lam sn x
+mId = Lam sx x
 
 mSucc :: Expr
 mSucc = Lam sn $ Lam sf $ Lam sx $ App f $ App (App n f) x
 
 makeNat :: Integer -> Expr
-makeNat = Lam sf $ Lam sx $ makeNatHelp
+makeNat i = Lam sf $ Lam sx $ makeNatHelp i
   where
     makeNatHelp :: Integer -> Expr
     makeNatHelp 0 = x
@@ -55,10 +55,10 @@ mAdd :: Expr
 mAdd = Lam sx $ Lam sy $ App (App x mSucc) y
 
 mMult :: Expr
-mMult = Lam sx $ Lam sy $ App (App x $ App mAdd y) mId
+mMult = Lam sx $ Lam sy $ App (App x $ App mAdd y) $ makeNat 0
 
 mPred :: Expr
-mPred = Lam sn $ Lam sf $ Lam sx $ App (App (App n $ Lam sg $ Lam sh $ App h $ App g f) Lam "u" x) mId
+mPred = Lam sn $ Lam sf $ Lam sx $ App (App (App n $ Lam sg $ Lam sh $ App h $ App g f) $ Lam "u" x) mId
 
 mSub :: Expr
 mSub = Lam sx $ Lam sy $ App (App y mPred) x
@@ -70,19 +70,19 @@ mFalse :: Expr
 mFalse = Lam sx $ Lam sy $ y
 
 mCond :: Expr
-mCond = Lam sf $ Lam sx $ Lam sy $ App (App f x) sy
+mCond = Lam sf $ Lam sx $ Lam sy $ App (App f x) y
 
 mAnd :: Expr
-mAnd = Lam sx $ Lam sy $ App (App sx sy) mFalse
+mAnd = Lam sx $ Lam sy $ App (App x y) mFalse
 
 mOr :: Expr
-mOr = Lam sx $ Lam sy $ App (App sx mTrue) sy
+mOr = Lam sx $ Lam sy $ App (App x mTrue) y
 
 mIsZero :: Expr
 mIsZero = Lam sn $ App (App n $ Lam sx mFalse) mTrue
 
 mEq :: Expr
-mEq = Lam sx $ Lam sy $ App (App mAnd $ App mIsZero $ App (App mSub y) x) App mIsZero $ App (App mSub x) y
+mEq = Lam sx $ Lam sy $ App (App mAnd $ App mIsZero $ App (App mSub y) x) $ App mIsZero $ App (App mSub x) y
 
 mY :: Expr
 mY = Lam sf $ App (Lam sx $ App f $ App x x) (Lam sx $ App f $ App x x)

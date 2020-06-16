@@ -83,7 +83,7 @@ eval e =
   where
   evalf :: Integer -> Expr -> IO Expr
   evalf n e = do
-    putStrLn $ show $ e
+    putStrLn $ (++) " -> \n" $ show $ e
     case ST.runStateT (step e) n of
       Nothing      -> return e -- normal form
       Just (e',n') -> evalf n' e'
