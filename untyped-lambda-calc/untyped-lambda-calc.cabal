@@ -19,7 +19,7 @@ extra-source-files:  CHANGELOG.md
 
 executable untyped-lambda-calc
   main-is:             Main.hs
-  other-modules: AST, Lexer, Parser, Eval
+  other-modules: AST, Lexer, Parser, Eval, Macros
   -- other-extensions:
   build-depends:       base >=4.13 && <4.14, array, containers, mtl > 2.0, transformers
   -- hs-source-dirs:
