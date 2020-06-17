@@ -15,16 +15,16 @@ type Id = String
 
 -- data Type = TNat | TBool | TArrow Type Type
 
-data VBool = VTrue | VFalse
+data VBool = VTrue | VFalse deriving (Eq)
 
-data VNat = Z | S VNat
+data VNat = Z | S VNat deriving (Eq)
 
-data EmptyArrow a b = EmptyArrow
+data EmptyArrow a b = EmptyArrow deriving (Eq)
 
-data UnTyped = UnTyped
-data TyNat = TyNat
-data TyBool = TyBool
-data TyArrow t1 t2 = TyArrow t1 t2
+data UnTyped = UnTyped deriving (Eq)
+data TyNat = TyNat deriving (Eq)
+data TyBool = TyBool deriving (Eq)
+data TyArrow t1 t2 = TyArrow t1 t2 deriving (Eq)
 
 class Empty t
 instance Empty t
@@ -43,9 +43,12 @@ data Expr c k n b t where
   XCond :: Expr c k n b b -> Expr c k n b t -> Expr c k n b t -> Expr c k n b t
   XLam :: c t' => Id -> t' -> Expr c k n b t -> Expr c k n b (k t' t)
   XApp :: c t' => Expr c k n b (k t' t) -> Expr c k n b t' -> Expr c k n b t
+  -- deriving (Eq)
 
 -- untyped programs
 type UExpr = Expr Empty EmptyArrow UnTyped UnTyped UnTyped
+  -- deriving (Eq)
 
 -- typed programs
 type TExpr t = Expr SimpType TyArrow TyNat TyBool t
+  -- deriving (Eq)
