@@ -57,3 +57,9 @@ check g (XCond e1 e2 e3) = do
     checkcond  (PBool p1) (PArrow t21 t22 p2) (PArrow t31 t32 p3)
       | t21 == t31 && t22 == t32 = do return $ PArrow t21 t22 $ XCond p1 p2 p3
       | otherwise = Nothing
+-- check g (XLam x t e) = do
+--   e' <- check (M.insert x t g) e
+--   case e' of
+--     PBool p        -> do return $ PArrow t TyBool (XLam x t p)
+--     PNat p         -> do return $ PArrow t TyNat (XLam x t p)
+--     PArrow t1 t2 p -> do return $ PArrow t (TArrow t1 t2) (XLam x t p)

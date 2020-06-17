@@ -34,21 +34,18 @@ instance SimpType TyNat
 instance SimpType TyBool
 instance (SimpType t1, SimpType t2) => SimpType (TyArrow t1 t2)
 
-data Expr c k n b t where
-  XNat :: VNat -> Expr c k n b n
-  XBool :: VBool -> Expr c k n b b
-  XVar :: Id -> Expr c k n b t
-  XAdd :: Expr c k n b n -> Expr c k n b n -> Expr c k n b n
-  XAnd :: Expr c k n b b -> Expr c k n b b -> Expr c k n b b
-  XCond :: Expr c k n b b -> Expr c k n b t -> Expr c k n b t -> Expr c k n b t
-  XLam :: c t' => Id -> t' -> Expr c k n b t -> Expr c k n b (k t' t)
-  XApp :: c t' => Expr c k n b (k t' t) -> Expr c k n b t' -> Expr c k n b t
-  -- deriving (Eq)
+data Expr k n b t where
+  XNat :: VNat -> Expr k n b n
+  XBool :: VBool -> Expr k n b b
+  XVar :: Id -> Expr k n b t
+  XAdd :: Expr k n b n -> Expr k n b n -> Expr k n b n
+  XAnd :: Expr k n b b -> Expr k n b b -> Expr k n b b
+  XCond :: Expr k n b b -> Expr k n b t -> Expr k n b t -> Expr k n b t
+  XLam :: SimpType t' => Id -> t' -> Expr k n b t -> Expr k n b (k t' t)
+  XApp :: SimpType t' => Expr k n b (k t' t) -> Expr k n b t' -> Expr k n b t
 
 -- untyped programs
-type UExpr = Expr Empty EmptyArrow UnTyped UnTyped UnTyped
-  -- deriving (Eq)
+type UExpr = Expr EmptyArrow UnTyped UnTyped UnTyped
 
 -- typed programs
-type TExpr t = Expr SimpType TyArrow TyNat TyBool t
-  -- deriving (Eq)
+type TExpr t = Expr TyArrow TyNat TyBool t
