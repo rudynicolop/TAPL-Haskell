@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE StandaloneDeriving        #-}
@@ -18,42 +19,32 @@ data VBool = VTrue | VFalse
 
 data VNat = Z | S VNat
 
-class Empty e
-instance Empty e
+data EmptyArrow a b = EmptyArrow
 
-data ENat = ENat VNat
-data EAdd a = EAdd a a
-
-class IsNatExpr a
-instance IsNatExpr ENat
-instance IsNatExpr a => IsNatExpr (EAdd a)
-
-data EBool = EBool VBool
-data EAnd a = EAnd a a
-
-class IsBoolExpr a
-instance IsBoolExpr EBool
-instance IsBoolExpr a => IsBoolExpr (EAnd a)
-
-data ECond a b = ECond a b b
-
-data ELam e = ELam Id Type e
-
-class IsArrowExpr e
-instance IsArrowExpr (ELam e)
-
+data UnTyped = UnTyped
 data TyNat = TyNat
 data TyBool = TyBool
-
 data TyArrow t1 t2 = TyArrow t1 t2
 
-data GExpr t n b where
-  GNat :: VNat -> GExpr n n b
-  GBool :: VBool -> GExpr n n b
-  GAdd :: n e => EAdd e -> GExpr n n b
-  GAnd :: b e => EAnd e -> GExpr b n b
-  GCond :: (b u, t v) =>  ECond u v -> GExpr t n b
+class Empty t
+instance Empty t
 
-type UGExpr t = GExpr t Empty Empty
+class SimpType t
+instance SimpType TyNat
+instance SimpType TyBool
+instance (SimpType t1, SimpType t2) => SimpType (TyArrow t1 t2)
 
-type TGExpr t = GExpr t IsNatExpr IsBoolExpr
+data Expr c k n b t where
+  XNat :: VNat -> Expr c k n b n
+  XBool :: VBool -> Expr c k n b b
+  XAdd :: Expr c k n b n -> Expr c k n b n -> Expr c k n b n
+  XAnd :: Expr c k n b b -> Expr c k n b b -> Expr c k n b b
+  XCond :: Expr c k n b b -> Expr c k n b t -> Expr c k n b t -> Expr c k n b t
+  XLam :: c t' => Id -> t' -> Expr c k n b t -> Expr c k n b (k t' t)
+  XApp :: c t' => Expr c k n b (k t' t) -> Expr c k n b t' -> Expr c k n b t
+
+-- untyped programs
+type UExpr = Expr Empty EmptyArrow UnTyped UnTyped UnTyped
+
+-- typed programs
+type TExpr t = Expr SimpType TyArrow TyNat TyBool t
