@@ -13,7 +13,7 @@ module AST where
 
 type Id = String
 
-data Type = TNat | TBool | TArrow Type Type
+-- data Type = TNat | TBool | TArrow Type Type
 
 data VBool = VTrue | VFalse
 
