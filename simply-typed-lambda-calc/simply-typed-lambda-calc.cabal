@@ -19,7 +19,7 @@ extra-source-files:  CHANGELOG.md
 
 executable simply-typed-lambda-calc
   main-is:             Main.hs
-  other-modules: AST
+  other-modules: AST, Checker
   -- other-extensions:
   build-depends:       base >=4.13 && <4.14
   -- hs-source-dirs:

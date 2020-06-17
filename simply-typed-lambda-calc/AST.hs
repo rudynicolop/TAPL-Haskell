@@ -37,6 +37,7 @@ instance (SimpType t1, SimpType t2) => SimpType (TyArrow t1 t2)
 data Expr c k n b t where
   XNat :: VNat -> Expr c k n b n
   XBool :: VBool -> Expr c k n b b
+  XVar :: Id -> Expr c k n b t
   XAdd :: Expr c k n b n -> Expr c k n b n -> Expr c k n b n
   XAnd :: Expr c k n b b -> Expr c k n b b -> Expr c k n b b
   XCond :: Expr c k n b b -> Expr c k n b t -> Expr c k n b t -> Expr c k n b t
