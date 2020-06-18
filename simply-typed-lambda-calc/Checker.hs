@@ -6,15 +6,36 @@
 {-# LANGUAGE RankNTypes                #-}
 
 module Checker where
---
--- import           AST
--- import           Data.Map.Strict as M
---
--- data Type where
---   TNat :: TyNat -> Type
---   TBool :: TyBool -> Type
---   TArrow :: TyArrow Type Type -> Type
---   deriving (Eq)
+
+import           AST
+import           Data.Map.Strict as M
+
+data Type where
+  TNat :: NatType -> Type
+  TBool :: BoolType -> Type
+  TArrow :: ArrowType Type Type -> Type
+  deriving (Eq)
+
+type Gamma = M.Map Id Type
+
+type Result t = Maybe (TypedExpr t)
+
+class TypeCheck t where
+  check :: Gamma -> UnTypedExpr -> Result t
+
+instance TypeCheck NatType where
+  check :: Gamma -> UnTypedExpr -> Result NatType
+  check _ (XNat n) = do return $ XNat n
+  check g (XVar x) = do
+    t <- M.lookup x g
+    case t of
+      TNat NatType -> do return $ XVar x
+      _            -> Nothing
+  check g (XAdd e1 e2) = do
+    e1' <- check g e1
+    e2' <- check g e2
+    return $ XAdd e1' e2'
+
 --
 -- -- data TypeWrapper = TypeWrapper Type
 --
@@ -29,7 +50,6 @@ module Checker where
 -- -- wrapped types, toothless constraints
 -- type WExpr = Expr TypeArrow Type Type Type
 --
--- type Gamma = M.Map Id Type
 --
 -- data TProg =
 --   PNat (TExpr TyNat)
