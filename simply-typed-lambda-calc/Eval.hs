@@ -112,7 +112,7 @@ step (ENot (Ty TBul e)) = do
   e' <- step e
   return $ ENot $ Ty TBul e'
 
--- left algebraic reductions
+-- left-hand algebraic reductions
 step (EAdd (Ty TNat e1) e2) = do
   e1' <- step e1
   return $ EAdd (Ty TNat e1') e2
@@ -134,6 +134,29 @@ step (EAnd (Ty TBul e1) e2) = do
 step (EOr (Ty TBul e1) e2) = do
   e1' <- step e1
   return $ EOr (Ty TBul e1') e2
+
+-- right-hand algebraic reductions
+step (EAdd (Ty TNat (ENat n1')) (Ty TNat e2)) = do
+  e2' <- step e2
+  return $ EAdd (Ty TNat (ENat n1')) (Ty TNat e2')
+step (EMul (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
+  e2' <- step ee2
+  return $ EMul (Ty TNat (ENat n1')) (Ty TNat e2')
+step (ESub (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
+  e2' <- step ee2
+  return $ ESub (Ty TNat (ENat n1')) (Ty TNat e2')
+step (EEq (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
+  e2' <- step ee2
+  return $ EEq (Ty TNat (ENat n1')) (Ty TNat e2')
+step (ELe (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
+  e2' <- step ee2
+  return $ ELe (Ty TNat (ENat n1')) (Ty TNat e2')
+step (EAnd (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
+  e2' <- step ee2
+  return $ EAnd (Ty TBul (EBul b1')) (Ty TBul e2')
+step (EOr (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
+  e2' <- step ee2
+  return $ EOr (Ty TBul (EBul b1')) (Ty TBul e2')
 
 eval :: TExpr -> Maybe Value
 eval _ = Nothing
