@@ -1,15 +1,24 @@
+-- {-# LANGUAGE StandaloneDeriving   #-}
+-- {-# LANGUAGE TypeSynonymInstances #-}
+
 module AST where
 
 type Id = String
+-- deriving instance (Eq Id)
+-- deriving instance (Show Id)
 
-data VNat = Z | S VNat deriving (Eq)
 
-data VBool = VTrue | VFalse deriving (Eq)
+data VNat = Z | S VNat
+  -- deriving (Eq, Show)
+
+data VBool = VTrue | VFalse
+  -- deriving (Eq, Show)
 
 data Type =
   TNat
   | TBool
   | TArrow Type Type
+  -- deriving (Eq, Show)
 
 data Expr t =
   ENat VNat
@@ -26,11 +35,16 @@ data Expr t =
   | ECond (t (Expr t)) (t (Expr t)) (t (Expr t))
   | ELam Id Type (t (Expr t))
   | EApp (t (Expr t)) (t (Expr t))
+  -- deriving (Eq, Show)
 
-data Bare e = Bare e
+-- bare annotation
+data B e = B e
+  -- deriving (Eq, Show)
 
-data Typed e = Typed Type e
+-- type annotation
+data T e = T Type e
+  -- deriving (Eq, Show)
 
-type BareExpr = Expr Bare
+type BExpr = Expr B
 
-type TypedExpr = Expr Typed
+type TExpr = Expr T
