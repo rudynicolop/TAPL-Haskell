@@ -10,28 +10,29 @@ data R = R Type TExpr
 
 type Result = Maybe R
 
-check :: Gamma -> BExpr -> Result
+check :: Annotation t => Gamma -> Expr t -> Result
 check g (ENat n)  = do return $ R TNat $ ENat n
 check g (EBul b) = do return $ R TBul $ EBul b
-check g (EVar (B x)) = do
-  t <- M.lookup x g
-  return $ R t $ EVar $ Ty t x
-check g (ENot (B e)) = do
-  e' <- check g e
+check g (EVar tx) = do
+  let x = gx tx in do
+    t <- M.lookup x g
+    return $ R t $ EVar $ Ty t x
+check g (ENot e) = do
+  e' <- e |> ge |> check g
   case e' of
     R TBul e'' -> do return $ R TBul $ ENot $ Ty TBul e''
     _          -> Nothing
-check g (EAdd (B e1) (B e2)) = checkbi g TNat TNat EAdd e1 e2
-check g (EMul (B e1) (B e2)) = checkbi g TNat TNat EMul e1 e2
-check g (ESub (B e1) (B e2)) = checkbi g TNat TNat ESub e1 e2
-check g (EEq  (B e1) (B e2)) = checkbi g TNat TBul EEq e1 e2
-check g (ELe  (B e1) (B e2)) = checkbi g TNat TBul ELe e1 e2
-check g (EOr  (B e1) (B e2)) = checkbi g TBul TBul EOr e1 e2
-check g (EAnd (B e1) (B e2)) = checkbi g TBul TBul EAnd e1 e2
-check g (ECond (B e1) (B e2) (B e3)) = do
-  e1' <- check g e1
-  e2' <- check g e2
-  e3' <- check g e3
+check g (EAdd e1 e2) = checkbi g TNat TNat EAdd e1 e2
+check g (EMul e1 e2) = checkbi g TNat TNat EMul e1 e2
+check g (ESub e1 e2) = checkbi g TNat TNat ESub e1 e2
+check g (EEq  e1 e2) = checkbi g TNat TBul EEq e1 e2
+check g (ELe  e1 e2) = checkbi g TNat TBul ELe e1 e2
+check g (EOr  e1 e2) = checkbi g TBul TBul EOr e1 e2
+check g (EAnd e1 e2) = checkbi g TBul TBul EAnd e1 e2
+check g (ECond e1 e2 e3) = do
+  e1' <- e1 |> ge |> check g
+  e2' <- e2 |> ge |> check g
+  e3' <- e3 |> ge |> check g
   checkcond e1' e2' e3'
   where
     checkcond :: R -> R -> R -> Result
@@ -39,12 +40,12 @@ check g (ECond (B e1) (B e2) (B e3)) = do
       | t2 == t3 = return $ R t2 $ ECond (Ty TBul e1'') (Ty t2 e2'') (Ty t3 e3'')
       | otherwise = Nothing
     checkcond _ _ _ = Nothing
-check g (ELam x t (B e)) = do
-  R t' e' <- check (M.insert x t g) e
+check g (ELam x t e) = do
+  R t' e' <- e |> ge |> check (M.insert x t g)
   return $ R (TArrow t t') (ELam x t $ Ty t' e')
-check g (EApp (B e1) (B e2)) = do
-  e1' <- check g e1
-  e2' <- check g e2
+check g (EApp e1 e2) = do
+  e1' <- e1 |> ge |> check g
+  e2' <- e2 |> ge |> check g
   checkapp e1' e2'
   where
     checkapp :: R -> R -> Result
@@ -53,10 +54,10 @@ check g (EApp (B e1) (B e2)) = do
       | otherwise = Nothing
     checkapp _ _ = Nothing
 
-checkbi :: Gamma -> Type -> Type -> (T TExpr -> T TExpr -> TExpr) -> BExpr -> BExpr -> Result
-checkbi g' t rt c e1 e2 = do
-  e1' <- check g' e1
-  e2' <- check g' e2
+checkbi :: Annotation t => Gamma -> Type -> Type -> (Ty TExpr -> Ty TExpr -> TExpr) -> t (Expr t) -> t (Expr t) -> Result
+checkbi g t rt c e1 e2 = do
+  e1' <- e1 |> ge |> check g
+  e2' <- e2 |> ge |> check g
   checkbi' e1' e2'
     where
       checkbi' :: R -> R -> Result

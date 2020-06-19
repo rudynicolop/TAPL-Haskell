@@ -7,9 +7,6 @@ import qualified Control.Monad.Trans.State.Lazy as ST
 import qualified Data.Map.Strict                as M
 import qualified Data.Set                       as S
 
-
-(|>) x f = f x
-
 -- set of free variables in an expression
 fv :: TExpr -> S.Set String
 fv (ENat _)                    = S.empty
@@ -191,5 +188,6 @@ step (EApp (Ty (TArrow t t') e1) (Ty t'' e2))
 -- default case, stuck or terminated
 step e = do return e
 
+-- TODO
 eval :: TExpr -> Maybe Value
 eval _ = Nothing

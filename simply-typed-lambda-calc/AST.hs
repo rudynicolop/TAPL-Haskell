@@ -2,6 +2,8 @@
 
 module AST where
 
+(|>) x f = f x
+
 type Id = String
 
 data Nat = Z | S Nat
@@ -40,12 +42,24 @@ data B e = B e
   deriving (Eq)
 
 -- type annotation
-data T e = Ty Type e
+data Ty e = Ty Type e
   deriving (Eq)
 
 type BExpr = Expr B
 
-type TExpr = Expr T
+type TExpr = Expr Ty
+
+class Annotation t where
+  ge :: t (Expr t) -> Expr t
+  gx :: t (Id) -> Id
+
+instance Annotation B where
+  ge (B e) = e
+  gx (B x) = x
+
+instance Annotation Ty where
+  ge (Ty _ e) = e
+  gx (Ty _ x) = x
 
 data Value =
   VNat Nat
