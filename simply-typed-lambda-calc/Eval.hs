@@ -1,9 +1,12 @@
 module Eval(eval) where
 
 import           AST
+import qualified Checker                        as C
 import qualified Control.Monad.Trans.Class      as MT
 import qualified Control.Monad.Trans.State.Lazy as ST
+import qualified Data.Map.Strict                as M
 import qualified Data.Set                       as S
+
 
 (|>) x f = f x
 
@@ -184,6 +187,9 @@ step (EApp (Ty (TArrow t t') e1) (Ty t'' e2))
       return $ EApp (Ty (TArrow t t') e1) (Ty t'' e2')
     else do return $ EApp (Ty (TArrow t t') e1') (Ty t'' e2)
   | otherwise = MT.lift Nothing
+
+-- default case, stuck or terminated
+step e = do return e
 
 eval :: TExpr -> Maybe Value
 eval _ = Nothing
