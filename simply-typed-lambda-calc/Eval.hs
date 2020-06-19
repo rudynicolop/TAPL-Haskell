@@ -88,7 +88,22 @@ step :: TExpr -> FreshTExprT
 step (ENat n) = do return $ ENat n
 step (EBul b) = do return $ EBul b
 step (EVar x) = do return $ EVar x
-step (ENot (Ty TBul (EBul b))) = do return $ EBul $ bnot b
+step (ENot (Ty TBul (EBul b))) = do
+  return $ EBul $ bnot b
+step (EAdd (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
+  return $ ENat $ nadd n1 n2
+step (EMul (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
+  return $ ENat $ nmul n1 n2
+step (ESub (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
+  return $ ENat $ nsub n1 n2
+step (EEq (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
+  return $ EBul $ eeq n1 n2
+step (ELe (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
+  return $ EBul $ ele n1 n2
+step (EAnd (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
+  return $ EBul $ band b1 b2
+step (EOr (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
+  return $ EBul $ bor b1 b2
 step (ENot (Ty TBul e)) = do
   e' <- step e
   return $ ENot $ Ty TBul e'
