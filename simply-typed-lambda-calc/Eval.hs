@@ -2,6 +2,7 @@ module Eval(eval) where
 
 import           AST
 import qualified Checker                        as C
+import qualified Control.Monad.Fix              as FIX
 import qualified Control.Monad.Trans.Class      as MT
 import qualified Control.Monad.Trans.State.Lazy as ST
 import qualified Data.Map.Strict                as M
@@ -76,13 +77,13 @@ sub x s (ELam y t (Ty t' body))
   isMem :: Bool
   isMem = s |> fv |> S.member y
 
-type FreshTExprT = ST.StateT Integer Maybe TExpr
+-- type FreshTExprT = ST.StateT Integer Maybe TExpr
 
-hoistState :: Monad m => ST.State s a -> ST.StateT s m a
-hoistState = ST.state . ST.runState
-
-hoistFreshMaybe :: FreshTExpr -> FreshTExprT
-hoistFreshMaybe = hoistState
+-- hoistState :: Monad m => ST.State s a -> ST.StateT s m a
+-- hoistState = ST.state . ST.runState
+--
+-- hoistFreshMaybe :: FreshTExpr -> FreshTExprT
+-- hoistFreshMaybe = hoistState
 
 bnot :: Bul -> Bul
 bnot T = F
@@ -124,7 +125,7 @@ bor T _ = T
 bor _ T = T
 
 -- normal order evaluation
-step :: TExpr -> FreshTExprT
+step :: TExpr -> FreshTExpr
 step (ENat n) = do return $ ENat n
 step (EBul b) = do return $ EBul b
 step (EVar x) = do return $ EVar x
@@ -199,33 +200,25 @@ step (EOr (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
   return $ EOr (Ty TBul (EBul b1')) (Ty TBul e2')
 
 -- control flow reductions
-step (ECond (Ty TBul (EBul T)) (Ty t1 e1) (Ty t2 _))
-  | t1 == t2 = do return e1
-  | otherwise = MT.lift Nothing
-step (ECond (Ty TBul (EBul F)) (Ty t1 _) (Ty t2 e2))
-  | t1 == t2 = do return e2
-  | otherwise = MT.lift Nothing
+step (ECond (Ty TBul (EBul T)) (Ty _ e1) _) = do return e1
+step (ECond (Ty TBul (EBul F)) _ (Ty _ e2)) = do return e2
 step (ELam x t (Ty t' e)) = do
   e' <- step e
   return $ ELam x t (Ty t' e')
-step (EApp (Ty (TArrow t t') (ELam x t1 (Ty t1' e1))) (Ty t2 e2))
-  | t == t1 && t == t2 && t' == t1 = do
-    hoistFreshMaybe $ sub x e2 e1
-  | otherwise = MT.lift Nothing
-step (EApp (Ty (TArrow t t') e1) (Ty t'' e2))
-  | t == t'' = do
-    e1' <- step e1
-    if e1' == e1 then do
-      e2' <- step e2
-      return $ EApp (Ty (TArrow t t') e1) (Ty t'' e2')
-    else do return $ EApp (Ty (TArrow t t') e1') (Ty t'' e2)
-  | otherwise = MT.lift Nothing
+step (EApp (Ty _ (ELam x _ (Ty _ e1))) (Ty _ e2)) = sub x e2 e1
+step (EApp (Ty t1 e1) (Ty t2 e2)) = do
+  e1' <- step e1
+  if e1' == e1 then do
+    e2' <- step e2
+    return $ EApp (Ty t1 e1) (Ty t2 e2')
+  else do return $ EApp (Ty t1 e1') (Ty t2 e2)
 
 -- default case, stuck or terminated
-step e = do
-  case C.check M.empty e of
-    Just _  -> do return e
-    Nothing -> MT.lift Nothing
+step e = do return e
+
+-- steps until stuck
+stepstar :: TExpr -> TExpr
+stepstar _ = ST.evalState (FIX.mfix step) 0
 
 -- TODO
 eval :: TExpr -> Maybe Value
