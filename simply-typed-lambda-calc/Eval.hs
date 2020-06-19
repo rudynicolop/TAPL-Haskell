@@ -62,23 +62,19 @@ sub x s (ECond (Ty t1 e1) (Ty t2 e2) (Ty t3 e3)) = do
   e2' <- sub x s e2
   e3' <- sub x s e3
   return $ ECond (Ty t1 e1') (Ty t2 e2') (Ty t3 e3')
--- sub x s (App e1 e2) = do
---   e1' <- sub x s e1
---   e2' <- sub x s e2
---   return $ App e1' e2'
--- sub x s (Lam y body)
---   | y == x = return $ Lam y body
---   | y /= x && not isMem = do
---     body' <- sub x s body
---     return $ Lam y body'
---   | y /= x && isMem = do
---     z <- freshName
---     body' <- sub y (Var z) body
---     body'' <- sub x s body'
---     return $ Lam z body''
---   where
---   isMem :: Bool
---   isMem = s |> fv |> S.member y
+sub x s (ELam y t (Ty t' body))
+  | y == x = do return $ ELam y t (Ty t' body)
+  | y /= x && not isMem = do
+    body' <- sub x s body
+    return $ ELam y t (Ty t' body')
+  | y /= x && isMem = do
+    z <- freshId
+    body' <- sub y (EVar (Ty t z)) body
+    body'' <- sub x s body'
+    return $ ELam z t (Ty t' body'')
+  where
+  isMem :: Bool
+  isMem = s |> fv |> S.member y
 
 type FreshTExprT = ST.StateT Integer Maybe TExpr
 
