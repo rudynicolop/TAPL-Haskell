@@ -88,6 +88,8 @@ step :: TExpr -> FreshTExprT
 step (ENat n) = do return $ ENat n
 step (EBul b) = do return $ EBul b
 step (EVar x) = do return $ EVar x
+
+-- algebraic operations
 step (ENot (Ty TBul (EBul b))) = do
   return $ EBul $ bnot b
 step (EAdd (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
@@ -104,9 +106,34 @@ step (EAnd (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
   return $ EBul $ band b1 b2
 step (EOr (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
   return $ EBul $ bor b1 b2
+
+-- algebraic reductions
 step (ENot (Ty TBul e)) = do
   e' <- step e
   return $ ENot $ Ty TBul e'
+
+-- left algebraic reductions
+step (EAdd (Ty TNat e1) e2) = do
+  e1' <- step e1
+  return $ EAdd (Ty TNat e1') e2
+step (EMul (Ty TNat e1) e2) = do
+  e1' <- step e1
+  return $ EMul (Ty TNat e1') e2
+step (ESub (Ty TNat e1) e2) = do
+  e1' <- step e1
+  return $ ESub (Ty TNat e1') e2
+step (EEq (Ty TNat e1) e2) = do
+  e1' <- step e1
+  return $ EEq (Ty TNat e1') e2
+step (ELe (Ty TNat e1) e2) = do
+  e1' <- step e1
+  return $ ELe (Ty TNat e1') e2
+step (EAnd (Ty TBul e1) e2) = do
+  e1' <- step e1
+  return $ EAnd (Ty TBul e1') e2
+step (EOr (Ty TBul e1) e2) = do
+  e1' <- step e1
+  return $ EOr (Ty TBul e1') e2
 
 eval :: TExpr -> Maybe Value
 eval _ = Nothing
