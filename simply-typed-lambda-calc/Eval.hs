@@ -186,7 +186,10 @@ step (EApp (Ty (TArrow t t') e1) (Ty t'' e2))
   | otherwise = MT.lift Nothing
 
 -- default case, stuck or terminated
-step e = do return e
+step e = do
+  case C.check M.empty e of
+    Just _  -> do return e
+    Nothing -> MT.lift Nothing
 
 -- TODO
 eval :: TExpr -> Maybe Value
