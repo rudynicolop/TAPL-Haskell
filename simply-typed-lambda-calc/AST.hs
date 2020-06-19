@@ -18,18 +18,18 @@ data Type =
   TNat
   | TBool
   | TArrow Type Type
-  -- deriving (Eq, Show)
+  deriving (Eq, Show)
 
 data Expr t =
   ENat VNat
   | EBool VBool
   | EVar (t Id)
+  | ENot (t (Expr t))
   | EAdd (t (Expr t)) (t (Expr t))
   | EMul (t (Expr t)) (t (Expr t))
   | ESub (t (Expr t)) (t (Expr t))
   | EEq (t (Expr t)) (t (Expr t))
   | ELeq (t (Expr t)) (t (Expr t))
-  | ENot (t (Expr t))
   | EAnd (t (Expr t)) (t (Expr t))
   | EOr (t (Expr t)) (t (Expr t))
   | ECond (t (Expr t)) (t (Expr t)) (t (Expr t))
