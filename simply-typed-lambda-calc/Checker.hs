@@ -38,6 +38,20 @@ check g (ECond (B e1) (B e2) (B e3)) = do
     checkcond (R TBool e1'') (R t2 e2'') (R t3 e3'')
       | t2 == t3 = return $ R t2 $ ECond (T TBool e1'') (T t2 e2'') (T t3 e3'')
       | otherwise = Nothing
+    checkcond _ _ _ = Nothing
+check g (ELam x t (B e)) = do
+  R t' e' <- check (M.insert x t g) e
+  return $ R (TArrow t t') (ELam x t $ T t' e')
+check g (EApp (B e1) (B e2)) = do
+  e1' <- check g e1
+  e2' <- check g e2
+  checkapp e1' e2'
+  where
+    checkapp :: R -> R -> Result
+    checkapp (R (TArrow t1 t3) e1') (R t2 e2')
+      | t1 == t3 = return $ R t3 $ EApp (T (TArrow t1 t3) e1') (T t1 e2')
+      | otherwise = Nothing
+    checkapp _ _ = Nothing
 
 checkbi :: Gamma -> Type -> Type -> (T TExpr -> T TExpr -> TExpr) -> BExpr -> BExpr -> Result
 checkbi g' t rt c e1 e2 = do
