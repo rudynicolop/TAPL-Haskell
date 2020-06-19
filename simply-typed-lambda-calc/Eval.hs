@@ -17,7 +17,7 @@ fv (EAdd (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
 fv (EMul (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
 fv (ESub (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
 fv (EEq (Ty _ e1) (Ty _ e2))   = S.union (fv e1) (fv e2)
-fv (ELeq (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
+fv (ELe (Ty _ e1) (Ty _ e2))   = S.union (fv e1) (fv e2)
 fv (EAnd (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
 fv (EOr (Ty _ e1) (Ty _ e2))   = S.union (fv e1) (fv e2)
 fv (ECond (Ty _ e1) (Ty _ e2) (Ty _ e3)) = S.union (fv e1) $ S.union (fv e2) (fv e3)
@@ -44,8 +44,54 @@ hoistState = ST.state . ST.runState
 hoistFreshMaybe :: FreshTExpr -> FreshTExprT
 hoistFreshMaybe = hoistState
 
+bnot :: Bul -> Bul
+bnot T = F
+bnot F = T
+
+nadd :: Nat -> Nat -> Nat
+nadd Z n       = n
+nadd (S n1) n2 = S $ nadd n1 n2
+
+nmul :: Nat -> Nat -> Nat
+nmul Z _       = Z
+nmul (S n1) n2 = nadd n1 (nmul n1 n2)
+
+nsub :: Nat -> Nat -> Nat
+nsub Z _           = Z
+nsub n Z           = n
+nsub (S n1) (S n2) = nsub n1 n2
+
+ele :: Nat -> Nat -> Bul
+ele n1 n2 =
+  case nsub n2 n1 of
+    S _ -> T
+    Z   -> F
+
+eeq :: Nat -> Nat -> Bul
+eeq n1 n2 =
+  case (nsub n1 n2, nsub n2 n1) of
+    (Z,Z) -> T
+    _     -> F
+
+band :: Bul -> Bul -> Bul
+band T T = T
+band F _ = F
+band _ F = F
+
+bor :: Bul -> Bul -> Bul
+bor F F = F
+bor T _ = T
+bor _ T = T
+
+-- normal order evaluation
 step :: TExpr -> FreshTExprT
 step (ENat n) = do return $ ENat n
+step (EBul b) = do return $ EBul b
+step (EVar x) = do return $ EVar x
+step (ENot (Ty TBul (EBul b))) = do return $ EBul $ bnot b
+step (ENot (Ty TBul e)) = do
+  e' <- step e
+  return $ ENot $ Ty TBul e'
 
 eval :: TExpr -> Maybe Value
 eval _ = Nothing

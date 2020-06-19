@@ -9,10 +9,10 @@ type Id = String
 
 
 data Nat = Z | S Nat
-  -- deriving (Eq, Show)
+  deriving (Eq, Show)
 
 data Bul = T | F
-  -- deriving (Eq, Show)
+  deriving (Eq, Show)
 
 data Type =
   TNat
@@ -29,7 +29,7 @@ data Expr t =
   | EMul (t (Expr t)) (t (Expr t))
   | ESub (t (Expr t)) (t (Expr t))
   | EEq (t (Expr t)) (t (Expr t))
-  | ELeq (t (Expr t)) (t (Expr t))
+  | ELe (t (Expr t)) (t (Expr t))
   | EAnd (t (Expr t)) (t (Expr t))
   | EOr (t (Expr t)) (t (Expr t))
   | ECond (t (Expr t)) (t (Expr t)) (t (Expr t))
