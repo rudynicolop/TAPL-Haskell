@@ -7,9 +7,22 @@ import qualified Data.Set                       as S
 
 (|>) x f = f x
 
--- TODO: set of free variables in an expression
+-- set of free variables in an expression
 fv :: TExpr -> S.Set String
-fv _ = S.empty
+fv (ENat _)                    = S.empty
+fv (EBul _)                    = S.empty
+fv (EVar (Ty _ x))             = S.singleton x
+fv (ENot (Ty _ e))             = fv e
+fv (EAdd (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
+fv (EMul (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
+fv (ESub (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
+fv (EEq (Ty _ e1) (Ty _ e2))   = S.union (fv e1) (fv e2)
+fv (ELeq (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
+fv (EAnd (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
+fv (EOr (Ty _ e1) (Ty _ e2))   = S.union (fv e1) (fv e2)
+fv (ECond (Ty _ e1) (Ty _ e2) (Ty _ e3)) = S.union (fv e1) $ S.union (fv e2) (fv e3)
+fv (ELam x _ (Ty _ e)) = S.delete x $ fv e
+fv (EApp (Ty _ e1) (Ty _ e2)) = S.union (fv e1) (fv e2)
 
 type Fresh a = ST.State Integer a
 
