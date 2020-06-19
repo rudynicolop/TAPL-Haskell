@@ -36,9 +36,49 @@ freshId = do
 
 type FreshTExpr = Fresh TExpr
 
+subbi :: Id -> TExpr -> Ty TExpr -> Ty TExpr -> (Ty TExpr -> Ty TExpr -> TExpr) -> FreshTExpr
+subbi x s (Ty t1 e1) (Ty t2 e2) bin = do
+  e1' <- sub x s e1
+  e2' <- sub x s e2
+  return $ bin (Ty t1 e1') (Ty t2 e2')
+
 -- TODO: capture-avoiding substitution
 sub :: Id -> TExpr -> TExpr -> FreshTExpr
-sub _ _ e = do return e
+sub _ _ (ENat n) = do return $ ENat n
+sub _ _ (EBul b) = do return $ EBul b
+sub x s (EVar (Ty t y))
+  | y == x = return s
+  | y /= x = return $ EVar (Ty t y)
+sub x s (EAdd e1 e2) = subbi x s e1 e2 EAdd
+sub x s (EMul e1 e2) = subbi x s e1 e2 ESub
+sub x s (ESub e1 e2) = subbi x s e1 e2 ESub
+sub x s (EEq  e1 e2) = subbi x s e1 e2 EEq
+sub x s (ELe  e1 e2) = subbi x s e1 e2 ELe
+sub x s (EAnd e1 e2) = subbi x s e1 e2 EAnd
+sub x s (EOr  e1 e2) = subbi x s e1 e2 EOr
+sub x s (EApp e1 e2) = subbi x s e1 e2 EApp
+sub x s (ECond (Ty t1 e1) (Ty t2 e2) (Ty t3 e3)) = do
+  e1' <- sub x s e1
+  e2' <- sub x s e2
+  e3' <- sub x s e3
+  return $ ECond (Ty t1 e1') (Ty t2 e2') (Ty t3 e3')
+-- sub x s (App e1 e2) = do
+--   e1' <- sub x s e1
+--   e2' <- sub x s e2
+--   return $ App e1' e2'
+-- sub x s (Lam y body)
+--   | y == x = return $ Lam y body
+--   | y /= x && not isMem = do
+--     body' <- sub x s body
+--     return $ Lam y body'
+--   | y /= x && isMem = do
+--     z <- freshName
+--     body' <- sub y (Var z) body
+--     body'' <- sub x s body'
+--     return $ Lam z body''
+--   where
+--   isMem :: Bool
+--   isMem = s |> fv |> S.member y
 
 type FreshTExprT = ST.StateT Integer Maybe TExpr
 
