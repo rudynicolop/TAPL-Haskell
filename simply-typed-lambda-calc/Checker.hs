@@ -1,4 +1,4 @@
-module Checker where
+module Checker(check) where
 
 import           AST
 -- import qualified Control.Monad.Except as ERR
@@ -12,22 +12,22 @@ type Result = Maybe R
 
 check :: Gamma -> BExpr -> Result
 check g (ENat n)  = do return $ R TNat $ ENat n
-check g (EBool b) = do return $ R TBool $ EBool b
+check g (EBul b) = do return $ R TBul $ EBul b
 check g (EVar (B x)) = do
   t <- M.lookup x g
-  return $ R t $ EVar $ T t x
+  return $ R t $ EVar $ Ty t x
 check g (ENot (B e)) = do
   e' <- check g e
   case e' of
-    R TBool e'' -> do return $ R TBool $ ENot $ T TBool e''
-    _           -> Nothing
+    R TBul e'' -> do return $ R TBul $ ENot $ Ty TBul e''
+    _          -> Nothing
 check g (EAdd (B e1) (B e2)) = checkbi g TNat TNat EAdd e1 e2
 check g (EMul (B e1) (B e2)) = checkbi g TNat TNat EMul e1 e2
 check g (ESub (B e1) (B e2)) = checkbi g TNat TNat ESub e1 e2
-check g (EEq  (B e1) (B e2)) = checkbi g TNat TBool EEq e1 e2
-check g (ELeq (B e1) (B e2)) = checkbi g TNat TBool ELeq e1 e2
-check g (EOr  (B e1) (B e2)) = checkbi g TBool TBool EOr e1 e2
-check g (EAnd (B e1) (B e2)) = checkbi g TBool TBool EAnd e1 e2
+check g (EEq  (B e1) (B e2)) = checkbi g TNat TBul EEq e1 e2
+check g (ELeq (B e1) (B e2)) = checkbi g TNat TBul ELeq e1 e2
+check g (EOr  (B e1) (B e2)) = checkbi g TBul TBul EOr e1 e2
+check g (EAnd (B e1) (B e2)) = checkbi g TBul TBul EAnd e1 e2
 check g (ECond (B e1) (B e2) (B e3)) = do
   e1' <- check g e1
   e2' <- check g e2
@@ -35,13 +35,13 @@ check g (ECond (B e1) (B e2) (B e3)) = do
   checkcond e1' e2' e3'
   where
     checkcond :: R -> R -> R -> Result
-    checkcond (R TBool e1'') (R t2 e2'') (R t3 e3'')
-      | t2 == t3 = return $ R t2 $ ECond (T TBool e1'') (T t2 e2'') (T t3 e3'')
+    checkcond (R TBul e1'') (R t2 e2'') (R t3 e3'')
+      | t2 == t3 = return $ R t2 $ ECond (Ty TBul e1'') (Ty t2 e2'') (Ty t3 e3'')
       | otherwise = Nothing
     checkcond _ _ _ = Nothing
 check g (ELam x t (B e)) = do
   R t' e' <- check (M.insert x t g) e
-  return $ R (TArrow t t') (ELam x t $ T t' e')
+  return $ R (TArrow t t') (ELam x t $ Ty t' e')
 check g (EApp (B e1) (B e2)) = do
   e1' <- check g e1
   e2' <- check g e2
@@ -49,7 +49,7 @@ check g (EApp (B e1) (B e2)) = do
   where
     checkapp :: R -> R -> Result
     checkapp (R (TArrow t1 t3) e1') (R t2 e2')
-      | t1 == t3 = return $ R t3 $ EApp (T (TArrow t1 t3) e1') (T t1 e2')
+      | t1 == t3 = return $ R t3 $ EApp (Ty (TArrow t1 t3) e1') (Ty t1 e2')
       | otherwise = Nothing
     checkapp _ _ = Nothing
 
@@ -61,5 +61,5 @@ checkbi g' t rt c e1 e2 = do
     where
       checkbi' :: R -> R -> Result
       checkbi' (R t1 e1'') (R t2 e2'')
-        | (t == t1 && t == t2) = return $ R rt $ c (T t e1'') (T t e2'')
+        | (t == t1 && t == t2) = return $ R rt $ c (Ty t e1'') (Ty t e2'')
         | otherwise = Nothing

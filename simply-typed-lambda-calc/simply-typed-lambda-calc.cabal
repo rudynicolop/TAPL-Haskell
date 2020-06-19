@@ -19,8 +19,8 @@ extra-source-files:  CHANGELOG.md
 
 executable simply-typed-lambda-calc
   main-is:             Main.hs
-  other-modules: AST, Checker, Hypothetical
+  other-modules: AST, Checker, Hypothetical, Eval
   -- other-extensions:
-  build-depends:       base >=4.13 && <4.14, containers, mtl
+  build-depends:       base >=4.13 && <4.14, containers, mtl, transformers
   -- hs-source-dirs:
   default-language:    Haskell2010

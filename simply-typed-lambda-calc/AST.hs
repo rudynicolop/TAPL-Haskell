@@ -8,21 +8,21 @@ type Id = String
 -- deriving instance (Show Id)
 
 
-data VNat = Z | S VNat
+data Nat = Z | S Nat
   -- deriving (Eq, Show)
 
-data VBool = VTrue | VFalse
+data Bul = T | F
   -- deriving (Eq, Show)
 
 data Type =
   TNat
-  | TBool
+  | TBul
   | TArrow Type Type
   deriving (Eq, Show)
 
 data Expr t =
-  ENat VNat
-  | EBool VBool
+  ENat Nat
+  | EBul Bul
   | EVar (t Id)
   | ENot (t (Expr t))
   | EAdd (t (Expr t)) (t (Expr t))
@@ -42,9 +42,14 @@ data B e = B e
   -- deriving (Eq, Show)
 
 -- type annotation
-data T e = T Type e
+data T e = Ty Type e
   -- deriving (Eq, Show)
 
 type BExpr = Expr B
 
 type TExpr = Expr T
+
+data Value =
+  VNat Nat
+  | VBul Bul
+  | VLam Id Type TExpr

@@ -101,8 +101,8 @@ data ArrowType a b = ArrowType a b
   deriving (Eq)
 
 data HyExpr c n b t where
-  XNat :: VNat -> HyExpr c n b n
-  XBool :: VBool -> HyExpr c n b b
+  XNat :: Nat -> HyExpr c n b n
+  XBool :: Bul -> HyExpr c n b b
   XVar :: Id -> HyExpr c n b t
   XAdd :: HyExpr c n b n -> HyExpr c n b n -> HyExpr c n b n
   XCond :: HyExpr c n b b -> HyExpr c n b t -> HyExpr c n b t -> HyExpr c n b t
