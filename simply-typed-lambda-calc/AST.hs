@@ -1,12 +1,8 @@
--- {-# LANGUAGE StandaloneDeriving   #-}
--- {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module AST where
 
 type Id = String
--- deriving instance (Eq Id)
--- deriving instance (Show Id)
-
 
 data Nat = Z | S Nat
   deriving (Eq, Show)
@@ -35,15 +31,17 @@ data Expr t =
   | ECond (t (Expr t)) (t (Expr t)) (t (Expr t))
   | ELam Id Type (t (Expr t))
   | EApp (t (Expr t)) (t (Expr t))
-  -- deriving (Eq, Show)
+
+instance Eq (t (Expr t)) => Eq (Expr t) where
+    (==) = (==)
 
 -- bare annotation
 data B e = B e
-  -- deriving (Eq, Show)
+  deriving (Eq)
 
 -- type annotation
 data T e = Ty Type e
-  -- deriving (Eq, Show)
+  deriving (Eq)
 
 type BExpr = Expr B
 

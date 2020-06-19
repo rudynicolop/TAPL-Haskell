@@ -36,6 +36,10 @@ freshId = do
 
 type FreshTExpr = Fresh TExpr
 
+-- TODO: capture-avoiding substitution
+sub :: Id -> TExpr -> TExpr -> FreshTExpr
+sub _ _ e = do return e
+
 type FreshTExprT = ST.StateT Integer Maybe TExpr
 
 hoistState :: Monad m => ST.State s a -> ST.StateT s m a
@@ -157,6 +161,29 @@ step (EAnd (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
 step (EOr (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
   e2' <- step ee2
   return $ EOr (Ty TBul (EBul b1')) (Ty TBul e2')
+
+-- control flow reductions
+step (ECond (Ty TBul (EBul T)) (Ty t1 e1) (Ty t2 _))
+  | t1 == t2 = do return e1
+  | otherwise = MT.lift Nothing
+step (ECond (Ty TBul (EBul F)) (Ty t1 _) (Ty t2 e2))
+  | t1 == t2 = do return e2
+  | otherwise = MT.lift Nothing
+step (ELam x t (Ty t' e)) = do
+  e' <- step e
+  return $ ELam x t (Ty t' e')
+step (EApp (Ty (TArrow t t') (ELam x t1 (Ty t1' e1))) (Ty t2 e2))
+  | t == t1 && t == t2 && t' == t1 = do
+    hoistFreshMaybe $ sub x e2 e1
+  | otherwise = MT.lift Nothing
+step (EApp (Ty (TArrow t t') e1) (Ty t'' e2))
+  | t == t'' = do
+    e1' <- step e1
+    if e1' == e1 then do
+      e2' <- step e2
+      return $ EApp (Ty (TArrow t t') e1) (Ty t'' e2')
+    else do return $ EApp (Ty (TArrow t t') e1') (Ty t'' e2)
+  | otherwise = MT.lift Nothing
 
 eval :: TExpr -> Maybe Value
 eval _ = Nothing
