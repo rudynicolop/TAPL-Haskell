@@ -2,8 +2,8 @@ module Eval(eval) where
 
 import           AST
 import qualified Checker                        as C
-import qualified Control.Monad.Fix              as FIX
 import qualified Control.Monad.Trans.Class      as MT
+import qualified Control.Monad.Trans.Fix        as FIX
 import qualified Control.Monad.Trans.State.Lazy as ST
 import qualified Data.Map.Strict                as M
 import qualified Data.Set                       as S
@@ -25,7 +25,7 @@ fv (ECond (Ty _ e1) (Ty _ e2) (Ty _ e3)) = S.union (fv e1) $ S.union (fv e2) (fv
 fv (ELam x _ (Ty _ e)) = S.delete x $ fv e
 fv (EApp (Ty _ e1) (Ty _ e2)) = S.union (fv e1) (fv e2)
 
-type Fresh a = ST.State Integer a
+type Fresh = ST.State Integer
 
 type FreshId = Fresh Id
 
@@ -77,14 +77,6 @@ sub x s (ELam y t (Ty t' body))
   isMem :: Bool
   isMem = s |> fv |> S.member y
 
--- type FreshTExprT = ST.StateT Integer Maybe TExpr
-
--- hoistState :: Monad m => ST.State s a -> ST.StateT s m a
--- hoistState = ST.state . ST.runState
---
--- hoistFreshMaybe :: FreshTExpr -> FreshTExprT
--- hoistFreshMaybe = hoistState
-
 bnot :: Bul -> Bul
 bnot T = F
 bnot F = T
@@ -124,8 +116,25 @@ bor F F = F
 bor T _ = T
 bor _ T = T
 
+type FreshFix = FIX.FixT Fresh TExpr
+
+class (MT.MonadTrans mt) => AltMonadLift mt where
+  altLift :: Monad m => m a -> mt m a
+
+-- why is the default lift NoProgress
+instance AltMonadLift FIX.FixT where
+ altLift m
+  = FIX.FixT
+  $ do  v <- m
+        return (v, FIX.RunAgain)
+
+-- The transformers-fix library is on opposite day...
+halt :: Monad m => a -> FIX.FixT m a
+halt a
+ = FIX.FixT $ return (a, FIX.NoProgress)
+
 -- normal order evaluation
-step :: TExpr -> FreshTExpr
+step :: TExpr -> FreshFix
 step (ENat n) = do return $ ENat n
 step (EBul b) = do return $ EBul b
 step (EVar x) = do return $ EVar x
@@ -202,10 +211,13 @@ step (EOr (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
 -- control flow reductions
 step (ECond (Ty TBul (EBul T)) (Ty _ e1) _) = do return e1
 step (ECond (Ty TBul (EBul F)) _ (Ty _ e2)) = do return e2
+step (ECond (Ty TBul e) (Ty t1 e1) (Ty t2 e2)) = do
+  e' <- step e
+  return $ ECond (Ty TBul e') (Ty t1 e1) (Ty t2 e2)
 step (ELam x t (Ty t' e)) = do
   e' <- step e
   return $ ELam x t (Ty t' e')
-step (EApp (Ty _ (ELam x _ (Ty _ e1))) (Ty _ e2)) = sub x e2 e1
+step (EApp (Ty _ (ELam x _ (Ty _ e1))) (Ty _ e2)) = altLift $ sub x e2 e1
 step (EApp (Ty t1 e1) (Ty t2 e2)) = do
   e1' <- step e1
   if e1' == e1 then do
@@ -214,11 +226,11 @@ step (EApp (Ty t1 e1) (Ty t2 e2)) = do
   else do return $ EApp (Ty t1 e1') (Ty t2 e2)
 
 -- default case, stuck or terminated
-step e = do return e
+step e = halt e
 
 -- steps until stuck
-stepstar :: TExpr -> TExpr
-stepstar _ = ST.evalState (FIX.mfix step) 0
+-- stepstar :: TExpr -> TExpr
+-- stepstar _ = ST.evalState (FIX.mfix step) 0
 
 -- TODO
 eval :: TExpr -> Maybe Value
