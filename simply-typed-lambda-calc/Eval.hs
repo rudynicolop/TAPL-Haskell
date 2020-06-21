@@ -1,4 +1,4 @@
-module Eval(eval) where
+module Eval(eval,stepstar) where
 
 import           AST
 import qualified Checker                        as C
@@ -228,9 +228,9 @@ step (EApp (Ty t1 e1) (Ty t2 e2)) = do
 -- default case, stuck or terminated
 step e = halt e
 
--- steps until stuck
--- stepstar :: TExpr -> TExpr
--- stepstar _ = ST.evalState (FIX.mfix step) 0
+-- steps until stuck/fixpoint
+stepstar :: TExpr -> TExpr
+stepstar e = ST.evalState (FIX.fixpoint step e) 0
 
 -- TODO
 eval :: TExpr -> Maybe Value
