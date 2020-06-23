@@ -1,4 +1,4 @@
-module Checker(check) where
+module Checker(check,R(..)) where
 
 import           AST
 -- import qualified Control.Monad.Except as ERR
@@ -50,7 +50,7 @@ check g (EApp e1 e2) = do
   where
     checkapp :: R -> R -> Result
     checkapp (R (TArrow t1 t3) e1') (R t2 e2')
-      | t1 == t3 = return $ R t3 $ EApp (Ty (TArrow t1 t3) e1') (Ty t1 e2')
+      | t1 == t2 = return $ R t3 $ EApp (Ty (TArrow t1 t3) e1') (Ty t1 e2')
       | otherwise = Nothing
     checkapp _ _ = Nothing
 
