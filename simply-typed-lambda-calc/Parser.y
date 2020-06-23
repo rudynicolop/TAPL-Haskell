@@ -38,8 +38,18 @@ eof {L.EOF}
 ')' {L.RPAREN}
 var {L.VAR $$}
 
-%nonassoc nat natType bulType true false '0' 'S' '->' '!' '+' '*' '-' '=' '<' '&' '|' ':' fun then else eof '(' ')' var
-%nonassoc APP
+%nonassoc '(' ')'
+%right '->'
+%nonassoc nat natType bulType true false '0' '.' ':' fun eof var
+%nonassoc if then else
+%nonassoc '|'
+%nonassoc '&'
+%nonassoc '=' '<'
+%nonassoc '!'
+%left '+' '-'
+%left '*'
+%nonassoc S
+%left APP
 
 %%
 
