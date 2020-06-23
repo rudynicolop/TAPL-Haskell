@@ -1,7 +1,6 @@
 module Eval(eval,stepstar) where
 
 import           AST
-import qualified Checker                        as C
 import qualified Control.Monad.Trans.Class      as MT
 import qualified Control.Monad.Trans.Fix        as FIX
 import qualified Control.Monad.Trans.State.Lazy as ST

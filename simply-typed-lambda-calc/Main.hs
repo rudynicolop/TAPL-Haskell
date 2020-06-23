@@ -14,8 +14,8 @@ main = do
   let ast = p A.|> L.alexLex A.|> P.parse
   putStrLn $  show ast
   case C.check M.empty ast of
-    Nothing           -> do putStrLn "Type Error, :("
-    Just (C.R t tast) -> do
+    Left msg           -> do putStrLn $ "Type-Error: " ++ msg
+    Right (C.R t tast) -> do
       putStrLn "Successfully Type-checks! :D"
       putStrLn $ "Program type: " ++ show t
       putStrLn $ show tast;
