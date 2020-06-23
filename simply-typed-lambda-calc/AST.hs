@@ -7,16 +7,31 @@ module AST where
 type Id = String
 
 data Nat = Z | S Nat
-  deriving (Eq, Show)
+  deriving (Eq)
+
+toInt Z     = 0
+toInt (S n) = 1 + (toInt n)
+
+instance Show Nat where
+  show n = show $ toInt n
 
 data Bul = T | F
-  deriving (Eq, Show)
+  deriving (Eq)
+
+instance Show Bul where
+  show T = "true"
+  show F = "false"
 
 data Type =
   TNat
   | TBul
   | TArrow Type Type
-  deriving (Eq, Show)
+  deriving (Eq)
+
+instance Show Type where
+  show TNat           = "Nat"
+  show TBul           = "Bool"
+  show (TArrow t1 t2) = "(" ++ (show t1) ++ " -> " ++ (show t2) ++ ")"
 
 data Expr t =
   ENat Nat
@@ -60,6 +75,22 @@ instance Annotation B where
 instance Annotation Ty where
   ge (Ty _ e) = e
   gx (Ty _ x) = x
+
+instance (Annotation t, Show (t (Expr t))) => Show (Expr t) where
+  show (ENat n) = show n
+  show (EBul b) = show b
+  show (EVar x) = x |> gx |> show
+  show (ENot e) = "(!" ++ (show $ ge e) ++ ")"
+  show (EAdd e1 e2) = "(" ++ (show $ ge e1) ++ " + " ++ (show $ ge e2) ++ ")"
+  show (EMul e1 e2) = "(" ++ (show $ ge e1) ++ " * " ++ (show $ ge e2) ++ ")"
+  show (ESub e1 e2) = "(" ++ (show $ ge e1) ++ " - " ++ (show $ ge e2) ++ ")"
+  show (EEq e1 e2) = "(" ++ (show $ ge e1) ++ " = " ++ (show $ ge e2) ++ ")"
+  show (ELe e1 e2) = "(" ++ (show $ ge e1) ++ " < " ++ (show $ ge e2) ++ ")"
+  show (EAnd e1 e2) = "(" ++ (show $ ge e1) ++ " & " ++ (show $ ge e2) ++ ")"
+  show (EOr e1 e2) = "(" ++ (show $ ge e1) ++ " | " ++ (show $ ge e2) ++ ")"
+  show (ECond e1 e2 e3) = "(if " ++ (show $ ge e1) ++ " then " ++ (show $ ge e2) ++ " else " ++ (show $ ge e3) ++ ")"
+  show (ELam x t e) = "(\\" ++ (show x) ++ ":" ++ (show t) ++ ". " ++ (show $ ge e) ++ ")"
+  show (EApp e1 e2) = "(" ++ (show $ ge e1) ++ " " ++ (show $ ge e2) ++ ")s"
 
 data Value =
   VNat Nat
