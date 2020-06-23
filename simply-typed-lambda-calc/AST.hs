@@ -56,9 +56,15 @@ instance Eq (t (Expr t)) => Eq (Expr t) where
 data B e = B e
   deriving (Eq)
 
+instance Show e => Show (B e) where
+  show (B e) = show e
+
 -- type annotation
 data Ty e = Ty Type e
   deriving (Eq)
+
+instance Show e => Show (Ty e) where
+  show (Ty _ e) = show e
 
 type BExpr = Expr B
 
@@ -79,18 +85,18 @@ instance Annotation Ty where
 instance (Annotation t, Show (t (Expr t))) => Show (Expr t) where
   show (ENat n) = show n
   show (EBul b) = show b
-  show (EVar x) = x |> gx |> show
-  show (ENot e) = "(!" ++ (show $ ge e) ++ ")"
-  show (EAdd e1 e2) = "(" ++ (show $ ge e1) ++ " + " ++ (show $ ge e2) ++ ")"
-  show (EMul e1 e2) = "(" ++ (show $ ge e1) ++ " * " ++ (show $ ge e2) ++ ")"
-  show (ESub e1 e2) = "(" ++ (show $ ge e1) ++ " - " ++ (show $ ge e2) ++ ")"
-  show (EEq e1 e2) = "(" ++ (show $ ge e1) ++ " = " ++ (show $ ge e2) ++ ")"
-  show (ELe e1 e2) = "(" ++ (show $ ge e1) ++ " < " ++ (show $ ge e2) ++ ")"
-  show (EAnd e1 e2) = "(" ++ (show $ ge e1) ++ " & " ++ (show $ ge e2) ++ ")"
-  show (EOr e1 e2) = "(" ++ (show $ ge e1) ++ " | " ++ (show $ ge e2) ++ ")"
-  show (ECond e1 e2 e3) = "(if " ++ (show $ ge e1) ++ " then " ++ (show $ ge e2) ++ " else " ++ (show $ ge e3) ++ ")"
-  show (ELam x t e) = "(\\" ++ (show x) ++ ":" ++ (show t) ++ ". " ++ (show $ ge e) ++ ")"
-  show (EApp e1 e2) = "(" ++ (show $ ge e1) ++ " " ++ (show $ ge e2) ++ ")s"
+  show (EVar x) = x |> gx
+  show (ENot e) = "(!" ++ (show e) ++ ")"
+  show (EAdd e1 e2) = "(" ++ (show e1) ++ " + " ++ (show e2) ++ ")"
+  show (EMul e1 e2) = "(" ++ (show e1) ++ " * " ++ (show e2) ++ ")"
+  show (ESub e1 e2) = "(" ++ (show e1) ++ " - " ++ (show e2) ++ ")"
+  show (EEq e1 e2) = "(" ++ (show e1) ++ " = " ++ (show e2) ++ ")"
+  show (ELe e1 e2) = "(" ++ (show e1) ++ " < " ++ (show e2) ++ ")"
+  show (EAnd e1 e2) = "(" ++ (show e1) ++ " & " ++ (show e2) ++ ")"
+  show (EOr e1 e2) = "(" ++ (show e1) ++ " | " ++ (show e2) ++ ")"
+  show (ECond e1 e2 e3) = "(if " ++ (show e1) ++ " then " ++ (show e2) ++ " else " ++ (show e3) ++ ")"
+  show (ELam x t e) = "(fun " ++ x ++ " : " ++ (show t) ++ " => " ++ (show e) ++ ")"
+  show (EApp e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
 
 data Value =
   VNat Nat

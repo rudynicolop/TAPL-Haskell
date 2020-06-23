@@ -17,23 +17,24 @@ $alpha = [a-zA-Z] -- alphabetic characters
 tokens :-
 $white+ ;
 $digit+ { \s -> NNUM $ read s}
-nat {\_ -> NATTYPE}
-bool {\_ -> BULTYPE}
+Nat {\_ -> NATTYPE}
+Bool {\_ -> BULTYPE}
 true {\_ -> TRUE}
 false {\_ -> FALSE}
 Z	{\_ -> ZERO}
 S {\_ -> SUCC}
-"." {\_ -> DOT}
+"=>" {\_ -> MAPSTO}
 "->" {\_ -> ARROW}
 "!" {\_ -> NOT}
 "+" {\_ -> ADD}
+"*" {\_ -> MUL}
 "-" {\_ -> SUB}
 "=" {\_ -> TEQ}
 "<" {\_ -> TLE}
 "&" {\_ -> AND}
 "|" {\_ -> OR}
 ":" {\_ -> HASTYPE}
-"\\" {\_ -> LAMBDA}
+"fun" {\_ -> LAMBDA}
 if {\_ -> IF}
 then {\_ -> THEN}
 else {\_ -> ELSE}
@@ -50,7 +51,7 @@ data Token =
   | FALSE
   | ZERO
   | SUCC
-  | DOT
+  | MAPSTO
   | ARROW
   | NOT
   | ADD

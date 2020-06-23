@@ -18,7 +18,7 @@ true {L.TRUE}
 false {L.FALSE}
 '0' {L.ZERO}
 'S' {L.SUCC}
-'.' {L.DOT}
+'=>' {L.MAPSTO}
 '->' {L.ARROW}
 '!' {L.NOT}
 '+' {L.ADD}
@@ -39,8 +39,9 @@ eof {L.EOF}
 var {L.VAR $$}
 
 %nonassoc '(' ')'
-%right '->'
-%nonassoc nat natType bulType true false '0' '.' ':' fun eof var
+%nonassoc '=>'
+%nonassoc fun ':'
+%nonassoc nat natType bulType true false '0' eof var
 %nonassoc if then else
 %nonassoc '|'
 %nonassoc '&'
@@ -50,6 +51,7 @@ var {L.VAR $$}
 %left '*'
 %nonassoc S
 %left APP
+%right '->'
 
 %%
 
@@ -67,7 +69,7 @@ Expr : nat {ENat $ M.genNat $1}
   | Expr '&' Expr {EAnd (B $1) (B $3)}
   | Expr '|' Expr {EOr (B $1) (B $3)}
   | if Expr then Expr else Expr {ECond (B $2) (B $4) (B $6)}
-  | fun var ':' Type '.' Expr {ELam $2 $4 (B $6)}
+  | fun var ':' Type '=>' Expr {ELam $2 $4 (B $6)}
   | Expr Expr %prec APP {EApp (B $1) (B $2)}
   | '(' Expr ')' {$2}
 
