@@ -86,3 +86,6 @@ mEq = Lam sx $ Lam sy $ App (App mAnd $ App mIsZero $ App (App mSub y) x) $ App 
 
 mY :: Expr
 mY = Lam sf $ App (Lam sx $ App f $ App x x) (Lam sx $ App f $ App x x)
+
+mOmega :: Expr
+mOmega = Lam sx $ App x x

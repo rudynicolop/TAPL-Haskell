@@ -23,6 +23,7 @@ lexx ('o':'r':stream) = OR : lexx stream
 lexx ('i':'s':'z':'e':'r':'o':stream) = ISZERO : lexx stream
 lexx ('e':'q':stream) = AST.EQ : lexx stream
 lexx ('Y':stream) = Y : lexx stream
+lexx ('o':'m':'e':'g':'a':stream) = OMEGA : lexx stream
 lexx (c:stream)
   | C.isSpace c = lexx stream
   | C.isDigit c = spanned C.isDigit $ NAT . read

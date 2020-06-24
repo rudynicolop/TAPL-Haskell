@@ -25,6 +25,7 @@ data Token =
   | ISZERO
   | EQ
   | Y
+  | OMEGA
   deriving (Show)
 
 data Expr =

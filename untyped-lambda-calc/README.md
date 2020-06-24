@@ -55,6 +55,7 @@ or a b = (\a.\b. a true b) a b
 iszero n = (\n. n (\x. false) true) n
 eq n m = (\n.\m. and (iszero (sub n m) (iszero (sub m n)))) n m
 Y f = (\f. (\x. f (x x)) (\x. f (x x))) f
+omega = \x. x x
 ```
 
 ## Example Programs
@@ -85,4 +86,11 @@ Try out the factorial function!
 ***I caution thee against computing the factorial for numbers greater than 3...***
 ```
 (Y \ f. \n. cond (iszero 0) 1 (mul n (f (pred n)))) 3
+```
+
+### Omega
+
+See what happens when you run the following program:
+```
+omega omega
 ```

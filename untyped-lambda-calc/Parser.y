@@ -31,8 +31,9 @@ or {OR}
 iszero {ISZERO}
 eq {AST.EQ}
 Y {Y}
+omega {OMEGA}
 
-%nonassoc var lparen lambda nat succ id add mult pred sub true false cond and or iszero eq Y
+%nonassoc var lparen lambda nat succ id add mult pred sub true false cond and or iszero eq Y omega
 %nonassoc APP
 
 %%
@@ -56,6 +57,7 @@ Expr : var {Var $1}
   | iszero {M.mIsZero}
   | eq {M.mEq}
   | Y {M.mY}
+  | omega {M.mOmega}
 {
 
 parseError :: [Token] -> a
