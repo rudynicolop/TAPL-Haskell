@@ -85,7 +85,7 @@ Try out the factorial function!
 
 ***I caution thee against computing the factorial for numbers greater than 3...***
 ```
-(Y \ f. \n. cond (iszero 0) 1 (mul n (f (pred n)))) 3
+(Y \ f. \n. cond (iszero n) 1 (mul n (f (pred n)))) 3
 ```
 
 ### Omega
