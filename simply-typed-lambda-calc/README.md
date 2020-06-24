@@ -65,6 +65,13 @@ The interpreter performs a lazy small-step evaluation.
 ---------------
  n1 + n2 -> n3
 ...
+
+--------------------------------
+ if true then e2 else e3 -> e2
+
+---------------------------------
+ if false then e2 else e3 -> e3
+
                     e1 -> e1'
 -------------------------------------------------
  if e1 then e2 else e3 -> if e1' then e2 else e3
