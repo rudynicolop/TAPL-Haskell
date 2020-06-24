@@ -159,7 +159,7 @@ step (EOr (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
 -- algebraic reductions
 step (ENot (Ty TBul e)) = do
   e' <- step e
-  return $ ENot $ Ty TBul e'
+  FIX.progress $ ENot $ Ty TBul e'
 
 -- left-hand algebraic reductions
 step (EAdd (Ty TNat e1) e2) = do
@@ -208,11 +208,11 @@ step (EOr (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
   return $ EOr (Ty TBul (EBul b1')) (Ty TBul e2')
 
 -- control flow reductions
-step (ECond (Ty TBul (EBul T)) (Ty _ e1) _) = do return e1
-step (ECond (Ty TBul (EBul F)) _ (Ty _ e2)) = do return e2
+step (ECond (Ty TBul (EBul T)) (Ty _ e1) _) = do FIX.progress e1
+step (ECond (Ty TBul (EBul F)) _ (Ty _ e2)) = do FIX.progress e2
 step (ECond (Ty TBul e) (Ty t1 e1) (Ty t2 e2)) = do
   e' <- step e
-  return $ ECond (Ty TBul e') (Ty t1 e1) (Ty t2 e2)
+  FIX.progress $ ECond (Ty TBul e') (Ty t1 e1) (Ty t2 e2)
 step (ELam x t (Ty t' e)) = do
   e' <- step e
   return $ ELam x t (Ty t' e')
