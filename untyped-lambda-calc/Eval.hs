@@ -74,7 +74,7 @@ step (App e1 e2) = do
       return $ App e1 e2'
     Just (e1',n') -> do
       ST.put n'
-      return (App e1' e2)
+      return $ App e1' e2
 
 -- evaluates a lambda Calculus program to its normal form
 eval :: Expr -> IO Expr
