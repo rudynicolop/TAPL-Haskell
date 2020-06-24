@@ -2,8 +2,8 @@ module Main where
 
 import qualified AST             as A
 import qualified Checker         as C
--- import qualified Eval    as E
 import qualified Data.Map.Strict as M
+import qualified Eval            as E
 import qualified Lexer           as L
 import qualified Parser          as P
 
@@ -18,4 +18,5 @@ main = do
     Right (C.R t tast) -> do
       putStrLn "Successfully Type-checks! :D"
       putStrLn $ "Program type: " ++ show t
-      putStrLn $ show tast;
+      putStrLn $ show tast
+      putStrLn $ "Evaluates to: " ++ (show $ E.stepstar tast)

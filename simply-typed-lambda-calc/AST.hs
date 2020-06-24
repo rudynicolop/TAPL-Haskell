@@ -97,8 +97,3 @@ instance (Annotation t, Show (t (Expr t))) => Show (Expr t) where
   show (ECond e1 e2 e3) = "(if " ++ (show e1) ++ " then " ++ (show e2) ++ " else " ++ (show e3) ++ ")"
   show (ELam x t e) = "(fun " ++ x ++ " : " ++ (show t) ++ " => " ++ (show e) ++ ")"
   show (EApp e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
-
-data Value =
-  VNat Nat
-  | VBul Bul
-  | VLam Id Type TExpr

@@ -1,4 +1,4 @@
-module Eval(eval,stepstar) where
+module Eval(stepstar) where
 
 import           AST
 import qualified Control.Monad.Trans.Class      as MT
@@ -132,7 +132,7 @@ halt :: Monad m => a -> FIX.FixT m a
 halt a
  = FIX.FixT $ return (a, FIX.NoProgress)
 
--- normal order evaluation
+-- lazy evaluation
 step :: TExpr -> FreshFix
 step (ENat n) = do return $ ENat n
 step (EBul b) = do return $ EBul b
@@ -219,10 +219,7 @@ step (ELam x t (Ty t' e)) = do
 step (EApp (Ty _ (ELam x _ (Ty _ e1))) (Ty _ e2)) = altLift $ sub x e2 e1
 step (EApp (Ty t1 e1) (Ty t2 e2)) = do
   e1' <- step e1
-  if e1' == e1 then do
-    e2' <- step e2
-    return $ EApp (Ty t1 e1) (Ty t2 e2')
-  else do return $ EApp (Ty t1 e1') (Ty t2 e2)
+  return $ EApp (Ty t1 e1') (Ty t2 e2)
 
 -- default case, stuck or terminated
 step e = halt e
@@ -230,7 +227,3 @@ step e = halt e
 -- steps until stuck/fixpoint
 stepstar :: TExpr -> TExpr
 stepstar e = ST.evalState (FIX.fixpoint step e) 0
-
--- TODO
-eval :: TExpr -> Maybe Value
-eval _ = Nothing
