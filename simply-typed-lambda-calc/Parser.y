@@ -61,13 +61,13 @@ Expr : nat {ENat $ M.genNat $1}
   | '0' {ENat Z}
   | var {EVar $ B $1}
   | '!' Expr {ENot $ B $2}
-  | Expr '+' Expr {EAdd (B $1) (B $3)}
-  | Expr '*' Expr {EMul (B $1) (B $3)}
-  | Expr '-' Expr {ESub (B $1) (B $3)}
-  | Expr '=' Expr {EEq (B $1) (B $3)}
-  | Expr '<' Expr {ELe (B $1) (B $3)}
-  | Expr '&' Expr {EAnd (B $1) (B $3)}
-  | Expr '|' Expr {EOr (B $1) (B $3)}
+  | Expr '+' Expr {EBOp EAdd (B $1) (B $3)}
+  | Expr '*' Expr {EBOp EMul (B $1) (B $3)}
+  | Expr '-' Expr {EBOp ESub (B $1) (B $3)}
+  | Expr '=' Expr {EBOp EEq (B $1) (B $3)}
+  | Expr '<' Expr {EBOp ELe (B $1) (B $3)}
+  | Expr '&' Expr {EBOp EAnd (B $1) (B $3)}
+  | Expr '|' Expr {EBOp EOr (B $1) (B $3)}
   | if Expr then Expr else Expr {ECond (B $2) (B $4) (B $6)}
   | fun var ':' Type '=>' Expr {ELam $2 $4 (B $6)}
   | Expr Expr %prec APP {EApp (B $1) (B $2)}

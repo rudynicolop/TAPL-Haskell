@@ -33,18 +33,30 @@ instance Show Type where
   show TBul           = "Bool"
   show (TArrow t1 t2) = "(" ++ (show t1) ++ " -> " ++ (show t2) ++ ")"
 
+data BOp =
+  EAdd
+  | EMul
+  | ESub
+  | EEq
+  | ELe
+  | EAnd
+  | EOr
+  deriving (Eq)
+
+instance Show BOp where
+  show EAdd = "+"
+  show EMul = "*"
+  show EEq  = "="
+  show ELe  = "<"
+  show EAnd = "&"
+  show EOr  = "|"
+
 data Expr t =
   ENat Nat
   | EBul Bul
   | EVar (t Id)
   | ENot (t (Expr t))
-  | EAdd (t (Expr t)) (t (Expr t))
-  | EMul (t (Expr t)) (t (Expr t))
-  | ESub (t (Expr t)) (t (Expr t))
-  | EEq (t (Expr t)) (t (Expr t))
-  | ELe (t (Expr t)) (t (Expr t))
-  | EAnd (t (Expr t)) (t (Expr t))
-  | EOr (t (Expr t)) (t (Expr t))
+  | EBOp BOp (t (Expr t)) (t (Expr t))
   | ECond (t (Expr t)) (t (Expr t)) (t (Expr t))
   | ELam Id Type (t (Expr t))
   | EApp (t (Expr t)) (t (Expr t))
@@ -87,13 +99,7 @@ instance (Annotation t, Show (t (Expr t))) => Show (Expr t) where
   show (EBul b) = show b
   show (EVar x) = x |> gx
   show (ENot e) = "(!" ++ (show e) ++ ")"
-  show (EAdd e1 e2) = "(" ++ (show e1) ++ " + " ++ (show e2) ++ ")"
-  show (EMul e1 e2) = "(" ++ (show e1) ++ " * " ++ (show e2) ++ ")"
-  show (ESub e1 e2) = "(" ++ (show e1) ++ " - " ++ (show e2) ++ ")"
-  show (EEq e1 e2) = "(" ++ (show e1) ++ " = " ++ (show e2) ++ ")"
-  show (ELe e1 e2) = "(" ++ (show e1) ++ " < " ++ (show e2) ++ ")"
-  show (EAnd e1 e2) = "(" ++ (show e1) ++ " & " ++ (show e2) ++ ")"
-  show (EOr e1 e2) = "(" ++ (show e1) ++ " | " ++ (show e2) ++ ")"
+  show (EBOp op e1 e2) = "(" ++ (show e1) ++ " " ++ (show op) ++ " " ++ (show e2) ++ ")"
   show (ECond e1 e2 e3) = "(if " ++ (show e1) ++ " then " ++ (show e2) ++ " else " ++ (show e3) ++ ")"
   show (ELam x t e) = "(fun " ++ x ++ " : " ++ (show t) ++ " => " ++ (show e) ++ ")"
   show (EApp e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"

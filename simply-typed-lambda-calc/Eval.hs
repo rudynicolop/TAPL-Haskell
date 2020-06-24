@@ -13,13 +13,7 @@ fv (ENat _)                    = S.empty
 fv (EBul _)                    = S.empty
 fv (EVar (Ty _ x))             = S.singleton x
 fv (ENot (Ty _ e))             = fv e
-fv (EAdd (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
-fv (EMul (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
-fv (ESub (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
-fv (EEq (Ty _ e1) (Ty _ e2))   = S.union (fv e1) (fv e2)
-fv (ELe (Ty _ e1) (Ty _ e2))   = S.union (fv e1) (fv e2)
-fv (EAnd (Ty _ e1) (Ty _ e2))  = S.union (fv e1) (fv e2)
-fv (EOr (Ty _ e1) (Ty _ e2))   = S.union (fv e1) (fv e2)
+fv (EBOp _ (Ty _ e1) (Ty _ e2)) = S.union (fv e1) (fv e2)
 fv (ECond (Ty _ e1) (Ty _ e2) (Ty _ e3)) = S.union (fv e1) $ S.union (fv e2) (fv e3)
 fv (ELam x _ (Ty _ e)) = S.delete x $ fv e
 fv (EApp (Ty _ e1) (Ty _ e2)) = S.union (fv e1) (fv e2)
@@ -36,27 +30,21 @@ freshId = do
 
 type FreshTExpr = Fresh TExpr
 
-subbi :: Id -> TExpr -> Ty TExpr -> Ty TExpr -> (Ty TExpr -> Ty TExpr -> TExpr) -> FreshTExpr
-subbi x s (Ty t1 e1) (Ty t2 e2) bin = do
-  e1' <- sub x s e1
-  e2' <- sub x s e2
-  return $ bin (Ty t1 e1') (Ty t2 e2')
-
--- TODO: capture-avoiding substitution
+-- capture-avoiding substitution
 sub :: Id -> TExpr -> TExpr -> FreshTExpr
 sub _ _ (ENat n) = do return $ ENat n
 sub _ _ (EBul b) = do return $ EBul b
 sub x s (EVar (Ty t y))
   | y == x = return s
   | y /= x = return $ EVar (Ty t y)
-sub x s (EAdd e1 e2) = subbi x s e1 e2 EAdd
-sub x s (EMul e1 e2) = subbi x s e1 e2 EMul
-sub x s (ESub e1 e2) = subbi x s e1 e2 ESub
-sub x s (EEq  e1 e2) = subbi x s e1 e2 EEq
-sub x s (ELe  e1 e2) = subbi x s e1 e2 ELe
-sub x s (EAnd e1 e2) = subbi x s e1 e2 EAnd
-sub x s (EOr  e1 e2) = subbi x s e1 e2 EOr
-sub x s (EApp e1 e2) = subbi x s e1 e2 EApp
+sub x s (EBOp bop (Ty t1 e1) (Ty t2 e2)) = do
+  e1' <- sub x s e1
+  e2' <- sub x s e2
+  return $ EBOp bop (Ty t1 e1') (Ty t2 e2')
+sub x s (EApp (Ty t1 e1) (Ty t2 e2)) = do
+  e1' <- sub x s e1
+  e2' <- sub x s e2
+  return $ EApp (Ty t1 e1') (Ty t2 e2')
 sub x s (ECond (Ty t1 e1) (Ty t2 e2) (Ty t3 e3)) = do
   e1' <- sub x s e1
   e2' <- sub x s e2
@@ -120,7 +108,7 @@ type FreshFix = FIX.FixT Fresh TExpr
 class (MT.MonadTrans mt) => AltMonadLift mt where
   altLift :: Monad m => m a -> mt m a
 
--- why is the default lift NoProgress
+-- why is the default lift NoProgress?
 instance AltMonadLift FIX.FixT where
  altLift m
   = FIX.FixT
@@ -141,20 +129,19 @@ step (EVar x) = do return $ EVar x
 -- algebraic operations
 step (ENot (Ty TBul (EBul b))) = do
   return $ EBul $ bnot b
-step (EAdd (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
-  return $ ENat $ nadd n1 n2
-step (EMul (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
-  return $ ENat $ nmul n1 n2
-step (ESub (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
-  return $ ENat $ nsub n1 n2
-step (EEq (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
-  return $ EBul $ eeq n1 n2
-step (ELe (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
-  return $ EBul $ ele n1 n2
-step (EAnd (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
-  return $ EBul $ band b1 b2
-step (EOr (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
-  return $ EBul $ bor b1 b2
+step bop@(EBOp op (Ty TNat (ENat n1)) (Ty TNat (ENat n2))) = do
+  case op of
+    EAdd -> return $ ENat $ nadd n1 n2
+    EMul -> return $ ENat $ nmul n1 n2
+    ESub -> return $ ENat $ nsub n1 n2
+    EEq  -> return $ EBul $ eeq  n1 n2
+    ELe  -> return $ EBul $ ele  n1 n2
+    _    -> halt bop
+step bop@(EBOp op (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
+  case op of
+    EAnd -> return $ EBul $ band b1 b2
+    EOr  -> return $ EBul $ bor  b1 b2
+    _    -> halt bop
 
 -- algebraic reductions
 step (ENot (Ty TBul e)) = do
@@ -162,50 +149,17 @@ step (ENot (Ty TBul e)) = do
   return $ ENot $ Ty TBul e'
 
 -- right-hand algebraic reductions
-step (EAdd (Ty TNat (ENat n1')) (Ty TNat e2)) = do
+step (EBOp bop (Ty TNat (ENat n1)) (Ty t2 e2)) = do
   e2' <- step e2
-  FIX.progress $ EAdd (Ty TNat (ENat n1')) (Ty TNat e2')
-step (EMul (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
-  e2' <- step ee2
-  FIX.progress $ EMul (Ty TNat (ENat n1')) (Ty TNat e2')
-step (ESub (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
-  e2' <- step ee2
-  FIX.progress $ ESub (Ty TNat (ENat n1')) (Ty TNat e2')
-step (EEq (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
-  e2' <- step ee2
-  FIX.progress $ EEq (Ty TNat (ENat n1')) (Ty TNat e2')
-step (ELe (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
-  e2' <- step ee2
-  FIX.progress $ ELe (Ty TNat (ENat n1')) (Ty TNat e2')
-step (EAnd (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
-  e2' <- step ee2
-  FIX.progress $ EAnd (Ty TBul (EBul b1')) (Ty TBul e2')
-step (EOr (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
-  e2' <- step ee2
-  FIX.progress $ EOr (Ty TBul (EBul b1')) (Ty TBul e2')
+  FIX.progress $ EBOp bop (Ty TNat (ENat n1)) (Ty t2 e2')
+step (EBOp bop (Ty TBul (EBul b1)) (Ty t2 e2)) = do
+  e2' <- step e2
+  FIX.progress $ EBOp bop (Ty TBul (EBul b1)) (Ty t2 e2')
 
 -- left-hand algebraic reductions
-step (EAdd (Ty TNat e1) e2) = do
+step (EBOp bop (Ty t1 e1) e2) = do
   e1' <- step e1
-  FIX.progress $ EAdd (Ty TNat e1') e2
-step (EMul (Ty TNat e1) e2) = do
-  e1' <- step e1
-  FIX.progress $ EMul (Ty TNat e1') e2
-step (ESub (Ty TNat e1) e2) = do
-  e1' <- step e1
-  FIX.progress $ ESub (Ty TNat e1') e2
-step (EEq (Ty TNat e1) e2) = do
-  e1' <- step e1
-  FIX.progress $ EEq (Ty TNat e1') e2
-step (ELe (Ty TNat e1) e2) = do
-  e1' <- step e1
-  FIX.progress $ ELe (Ty TNat e1') e2
-step (EAnd (Ty TBul e1) e2) = do
-  e1' <- step e1
-  FIX.progress $ EAnd (Ty TBul e1') e2
-step (EOr (Ty TBul e1) e2) = do
-  e1' <- step e1
-  FIX.progress $ EOr (Ty TBul e1') e2
+  FIX.progress $ EBOp bop (Ty t1 e1') e2
 
 -- control flow reductions
 step (ECond (Ty TBul (EBul T)) (Ty _ e1) _) = do return e1

@@ -22,17 +22,29 @@ check g bang@(ENot e) = do
   e' <- e |> ge |> check g
   case e' of
     R TBul e'' -> do return $ R TBul $ ENot $ Ty TBul e''
-    R t _         -> do
+    R t _      -> do
       ERR.throwError $
         "In expression " ++ (show bang) ++
           ", expression " ++ (show e) ++ " has type " ++ (show t)
-check g op@(EAdd e1 e2) = checkbi g TNat TNat EAdd e1 e2 op
-check g op@(EMul e1 e2) = checkbi g TNat TNat EMul e1 e2 op
-check g op@(ESub e1 e2) = checkbi g TNat TNat ESub e1 e2 op
-check g op@(EEq  e1 e2) = checkbi g TNat TBul EEq e1 e2 op
-check g op@(ELe  e1 e2) = checkbi g TNat TBul ELe e1 e2 op
-check g op@(EOr  e1 e2) = checkbi g TBul TBul EOr e1 e2 op
-check g op@(EAnd e1 e2) = checkbi g TBul TBul EAnd e1 e2 op
+check g bop@(EBOp op e1 e2) = do
+  R t1 e1' <- e1 |> ge |> check g
+  R t2 e2' <- e2 |> ge |> check g
+  let (t,rt) = expectedTypes op in
+    if (t == t1 && t == t2)
+      then return $ R rt $ EBOp op (Ty t e1') (Ty t e2')
+      else ERR.throwError $
+        "In expression " ++ (show bop) ++
+          ", expression " ++ (show e1') ++ " has type " ++ (show t1) ++
+            ", and expression " ++ (show e2') ++ " has type " ++ (show t2)
+  where
+    expectedTypes :: BOp -> (Type,Type)
+    expectedTypes EAdd = (TNat,TNat)
+    expectedTypes EMul = (TNat,TNat)
+    expectedTypes ESub = (TNat,TNat)
+    expectedTypes EEq  = (TNat,TBul)
+    expectedTypes ELe  = (TNat,TBul)
+    expectedTypes EAnd = (TBul,TBul)
+    expectedTypes EOr  = (TBul,TBul)
 check g cond@(ECond e1 e2 e3) = do
   e1' <- e1 |> ge |> check g
   e2' <- e2 |> ge |> check g
@@ -68,17 +80,3 @@ check g app@(EApp e1 e2) = do
     checkapp (R t1 _) _ = ERR.throwError $
       "In application " ++ (show app) ++
         ", expression " ++ (show e1) ++ " has type " ++ (show t1)
-
-checkbi :: (Show (t (Expr t)), Annotation t) => Gamma -> Type -> Type -> (Ty TExpr -> Ty TExpr -> TExpr) -> t (Expr t) -> t (Expr t) -> Expr t -> Result
-checkbi g t rt c e1 e2 op = do
-  e1' <- e1 |> ge |> check g
-  e2' <- e2 |> ge |> check g
-  checkbi' e1' e2'
-    where
-      checkbi' :: R -> R -> Result
-      checkbi' (R t1 e1'') (R t2 e2'')
-        | (t == t1 && t == t2) = return $ R rt $ c (Ty t e1'') (Ty t e2'')
-        | otherwise = ERR.throwError $
-          "In expression " ++ (show op) ++
-            ", expression " ++ (show e1'') ++ " has type " ++ (show t1) ++
-              ", but expression " ++ (show e2'') ++ " has type " ++ (show t2)
