@@ -53,17 +53,17 @@ Typing judgments are of the form `G |- e : t`, where `G` maps variables to types
 The interpreter performs a lazy small-step evaluation.
 
 ```
-      e1 -> e1'
----------------------
- e1 + e2 -> e1' + e2
+ n1 + n2 = n3
+---------------
+ n1 + n2 -> n3
 
      e2 -> e2'
 -------------------
  n + e2 -> n + e2'
 
- n1 + n2 = n3
----------------
- n1 + n2 -> n3
+      e1 -> e1'
+---------------------
+ e1 + e2 -> e1' + e2
 ...
 
 --------------------------------

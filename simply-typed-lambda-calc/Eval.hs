@@ -50,7 +50,7 @@ sub x s (EVar (Ty t y))
   | y == x = return s
   | y /= x = return $ EVar (Ty t y)
 sub x s (EAdd e1 e2) = subbi x s e1 e2 EAdd
-sub x s (EMul e1 e2) = subbi x s e1 e2 ESub
+sub x s (EMul e1 e2) = subbi x s e1 e2 EMul
 sub x s (ESub e1 e2) = subbi x s e1 e2 ESub
 sub x s (EEq  e1 e2) = subbi x s e1 e2 EEq
 sub x s (ELe  e1 e2) = subbi x s e1 e2 ELe
@@ -86,7 +86,7 @@ nadd (S n1) n2 = S $ nadd n1 n2
 
 nmul :: Nat -> Nat -> Nat
 nmul Z _       = Z
-nmul (S n1) n2 = nadd n1 (nmul n1 n2)
+nmul (S n1) n2 = nadd n2 (nmul n1 n2)
 
 nsub :: Nat -> Nat -> Nat
 nsub Z _           = Z
@@ -159,67 +159,64 @@ step (EOr (Ty TBul (EBul b1)) (Ty TBul (EBul b2))) = do
 -- algebraic reductions
 step (ENot (Ty TBul e)) = do
   e' <- step e
-  FIX.progress $ ENot $ Ty TBul e'
-
--- left-hand algebraic reductions
-step (EAdd (Ty TNat e1) e2) = do
-  e1' <- step e1
-  return $ EAdd (Ty TNat e1') e2
-step (EMul (Ty TNat e1) e2) = do
-  e1' <- step e1
-  return $ EMul (Ty TNat e1') e2
-step (ESub (Ty TNat e1) e2) = do
-  e1' <- step e1
-  return $ ESub (Ty TNat e1') e2
-step (EEq (Ty TNat e1) e2) = do
-  e1' <- step e1
-  return $ EEq (Ty TNat e1') e2
-step (ELe (Ty TNat e1) e2) = do
-  e1' <- step e1
-  return $ ELe (Ty TNat e1') e2
-step (EAnd (Ty TBul e1) e2) = do
-  e1' <- step e1
-  return $ EAnd (Ty TBul e1') e2
-step (EOr (Ty TBul e1) e2) = do
-  e1' <- step e1
-  return $ EOr (Ty TBul e1') e2
+  return $ ENot $ Ty TBul e'
 
 -- right-hand algebraic reductions
 step (EAdd (Ty TNat (ENat n1')) (Ty TNat e2)) = do
   e2' <- step e2
-  return $ EAdd (Ty TNat (ENat n1')) (Ty TNat e2')
+  FIX.progress $ EAdd (Ty TNat (ENat n1')) (Ty TNat e2')
 step (EMul (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
   e2' <- step ee2
-  return $ EMul (Ty TNat (ENat n1')) (Ty TNat e2')
+  FIX.progress $ EMul (Ty TNat (ENat n1')) (Ty TNat e2')
 step (ESub (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
   e2' <- step ee2
-  return $ ESub (Ty TNat (ENat n1')) (Ty TNat e2')
+  FIX.progress $ ESub (Ty TNat (ENat n1')) (Ty TNat e2')
 step (EEq (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
   e2' <- step ee2
-  return $ EEq (Ty TNat (ENat n1')) (Ty TNat e2')
+  FIX.progress $ EEq (Ty TNat (ENat n1')) (Ty TNat e2')
 step (ELe (Ty TNat (ENat n1')) (Ty TNat ee2)) = do
   e2' <- step ee2
-  return $ ELe (Ty TNat (ENat n1')) (Ty TNat e2')
+  FIX.progress $ ELe (Ty TNat (ENat n1')) (Ty TNat e2')
 step (EAnd (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
   e2' <- step ee2
-  return $ EAnd (Ty TBul (EBul b1')) (Ty TBul e2')
+  FIX.progress $ EAnd (Ty TBul (EBul b1')) (Ty TBul e2')
 step (EOr (Ty TBul (EBul b1')) (Ty TBul ee2)) = do
   e2' <- step ee2
-  return $ EOr (Ty TBul (EBul b1')) (Ty TBul e2')
+  FIX.progress $ EOr (Ty TBul (EBul b1')) (Ty TBul e2')
+
+-- left-hand algebraic reductions
+step (EAdd (Ty TNat e1) e2) = do
+  e1' <- step e1
+  FIX.progress $ EAdd (Ty TNat e1') e2
+step (EMul (Ty TNat e1) e2) = do
+  e1' <- step e1
+  FIX.progress $ EMul (Ty TNat e1') e2
+step (ESub (Ty TNat e1) e2) = do
+  e1' <- step e1
+  FIX.progress $ ESub (Ty TNat e1') e2
+step (EEq (Ty TNat e1) e2) = do
+  e1' <- step e1
+  FIX.progress $ EEq (Ty TNat e1') e2
+step (ELe (Ty TNat e1) e2) = do
+  e1' <- step e1
+  FIX.progress $ ELe (Ty TNat e1') e2
+step (EAnd (Ty TBul e1) e2) = do
+  e1' <- step e1
+  FIX.progress $ EAnd (Ty TBul e1') e2
+step (EOr (Ty TBul e1) e2) = do
+  e1' <- step e1
+  FIX.progress $ EOr (Ty TBul e1') e2
 
 -- control flow reductions
-step (ECond (Ty TBul (EBul T)) (Ty _ e1) _) = do FIX.progress e1
-step (ECond (Ty TBul (EBul F)) _ (Ty _ e2)) = do FIX.progress e2
+step (ECond (Ty TBul (EBul T)) (Ty _ e1) _) = do return e1
+step (ECond (Ty TBul (EBul F)) _ (Ty _ e2)) = do return e2
 step (ECond (Ty TBul e) (Ty t1 e1) (Ty t2 e2)) = do
   e' <- step e
   FIX.progress $ ECond (Ty TBul e') (Ty t1 e1) (Ty t2 e2)
-step (ELam x t (Ty t' e)) = do
-  e' <- step e
-  return $ ELam x t (Ty t' e')
 step (EApp (Ty _ (ELam x _ (Ty _ e1))) (Ty _ e2)) = altLift $ sub x e2 e1
 step (EApp (Ty t1 e1) (Ty t2 e2)) = do
   e1' <- step e1
-  return $ EApp (Ty t1 e1') (Ty t2 e2)
+  FIX.progress $ EApp (Ty t1 e1') (Ty t2 e2)
 
 -- default case, stuck or terminated
 step e = halt e
