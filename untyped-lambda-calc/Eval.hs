@@ -66,15 +66,12 @@ step (Lam x e) = do
   e' <- step e
   return $ Lam x e'
 step (App (Lam x e1) e2) = hoistFreshMaybe $ sub x e2 e1
+step (App (Var x) e2) = do
+  e2' <- step e2
+  return $ App (Var x) e2'
 step (App e1 e2) = do
-  n <- ST.get
-  case ST.runStateT (step e1) n of
-    Nothing -> do
-      e2' <- step e2
-      return $ App e1 e2'
-    Just (e1',n') -> do
-      ST.put n'
-      return $ App e1' e2
+  e1' <- step e1
+  return $ App e1' e2
 
 -- evaluates a lambda Calculus program to its normal form
 eval :: Expr -> IO Expr

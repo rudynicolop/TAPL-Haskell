@@ -13,7 +13,6 @@ e ::= x | \x.e | e1 e2 | (e)
 The implementation evaluates expressions under a normal-order small-step semantics.
 
 ```
-
     e -> e'
 ---------------
  \x.e -> \x.e'
@@ -21,10 +20,15 @@ The implementation evaluates expressions under a normal-order small-step semanti
 ------------------------
  (\x.e1) e2 -> e1[e2/x]
 
-    e1 -> e2'
+    e2 -> e2'
+-----------------
+  x e2 -> x e2'
+
+    e1 -> e1'
 -----------------
  e1 e2 -> e1' e2
 ```
+At long last a formalized semantics for normal-order evaluation, to supplement vague—"left-most outer-most full beta-reduction" explanations.
 
 ## Supported Macros
 
@@ -51,4 +55,34 @@ or a b = (\a.\b. a true b) a b
 iszero n = (\n. n (\x. false) true) n
 eq n m = (\n.\m. and (iszero (sub n m) (iszero (sub m n)))) n m
 Y f = (\f. (\x. f (x x)) (\x. f (x x))) f
+```
+
+## Example Programs
+
+### Arithmetic
+
+The interpreter performs arithmetic!
+```
+add 3 4
+mul 2 3
+and true false
+```
+
+### Fibonacci
+
+Try computing Fibonacci numbers!
+
+***To those computing the Fibonacci number for 5,6 or above, beware!***
+
+```
+(Y \f. \x. cond (or (iszero x) (eq 1 x)) 1 (add (f (pred x)) (f (sub x 2)))) 3
+```
+
+### Factorial
+
+Try out the factorial function!
+
+***I caution thee against computing the factorial for numbers greater than 3...***
+```
+(Y \ f. \n. cond (iszero 0) 1 (mul n (f (pred n)))) 3
 ```
