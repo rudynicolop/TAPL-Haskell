@@ -1,5 +1,5 @@
 # TAPL-Haskell
-Haskell implementations of TAPL type systems.
+Haskell implementations of type systems as described in Benjamin Pierce's ***Types and Programming Languages***.
 
 ## Build and Run
 
