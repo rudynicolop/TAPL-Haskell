@@ -5,7 +5,7 @@
 Let `e` range over expressions, `x` range over variables, and `t` range over types.
 
 ```
-t ::= nat | bool | t1 -> t2 | (t)
+t ::= Nat | Bool | t1 -> t2 | (t)
 n ::= Z | S n | 0 | 1 | 2 | 3 | ...
 b ::= true | false
 e ::= n | b | x | !e  | e + e
@@ -21,21 +21,21 @@ Typing judgments are of the form `G |- e : t`, where `G` maps variables to types
 
 ```
 --------------
- G |- n : nat
+ G |- n : Nat
 
 ---------------
- G |- b : bool
+ G |- b : Bool
 
   G x = t
 ------------
  G |- x : t
 
- G |- e1 : nat   G |- e2 : nat
+ G |- e1 : Nat   G |- e2 : Nat
 -------------------------------
-      G |- e1 + e2 : nat
+      G |- e1 + e2 : Nat
 ...
 
- G |- e1 : bool   G |- e2 : t   G |- e3 : t  
+ G |- e1 : Bool   G |- e2 : t   G |- e3 : t  
 ---------------------------------------------
        G |- if e1 then e2 else e3 : t
 
