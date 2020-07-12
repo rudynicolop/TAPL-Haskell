@@ -1,57 +1,47 @@
 module AST where
 
 import qualified Data.Map.Strict as DM
+import qualified Numeric.Natural as N
 
 type Id = String
 
--- natural numbers
-data Nat = Z | S Nat
+type Label = String
 
--- booleans
-data Bul = T | F
+-- type synonym
+type TypeSyn = String
 
 -- Unit is represented as the empty tuple
 
 -- algebraic data types
 type ALG u v = DM.Map u v
 
-type Tuple t = ALG Nat t
+type Tuple t = ALG N.Natural t
 
-type Record t = ALG Id t
+type Record t = ALG Label t
 
-type Sum t = ALG Id t
+type Sum t = ALG Label t
 
 data Type =
-  TNat -- natural number type
-  | TBul -- boolean type
+  TSyn TypeSyn -- type synonym
   | TLam Type Type -- function type
   | TTup (Tuple Type) -- tuple type
   | TRec (Record Type) -- record type
   | TSum (Sum Type) -- sum/variant type
 
-data Value =
-  VNat Nat -- natural number term
-  | VBul Bul -- boolean term
-  | VLam Id Type Expr -- function term
-  | VTup [Value] -- tuple value
-  | VRec (Record Value) -- record value
-  | VSum (Sum Type) Id Value -- sum/variant value
-
--- binary operations
-data Op = Add | Eq | And
+data Pattern =
+  PTup (Tuple Pattern)
+  | PRec (Record Pattern)
+  | PSum TypeSyn Label Pattern
 
 data Expr =
-  EVar Id
-  | EValue Value -- values subset expressions
-  | EBOp Op Expr Expr -- binary operations
-  | ECnd Expr Expr Expr -- conditionals
+  EVar Id -- variable
+  | ELam Pattern Type Expr -- function term
   | EApp Expr Expr -- function application
-  | ESeq Expr Expr -- sequences
-  | EAsc Type Expr -- ascription
-  | ELet Id Expr Expr -- let binding
-  | ETup [Expr] -- tuple expression
-  | ETupPrj Expr Nat -- tuple projection
+  | ELet Pattern Expr Expr -- let binding
+  | ETup (Tuple Expr) -- tuple expression
+  | ETupPrj Expr N.Natural -- tuple projection
   | ERec (Record Expr) -- record expression
-  | ERecPrj Expr Id -- record projection
-  | ESum (Sum Type) Id Expr -- sum/variant expression
-  | EMatch Expr (Sum Expr) -- match expression
+  | ERecPrj Expr Label -- record projection
+  | ESum TypeSyn Label Expr -- sum/variant expression
+  | EMatch Expr [(Pattern,Expr)] -- pattern match
+  | ESyn TypeSyn Type Expr -- type synonym definition
