@@ -1,5 +1,7 @@
 # The Extended Simply-Typed Lambda Calculus
 
+This language extends the simply-typed lambda calculus with products, records, and named sum/variant types, and features pattern-matching as well as type synonyms. These last few features blow-up the complexity of the type-system from the bare-bones simply-typed lambda calculus.
+
 ## Syntax
 
 This language features product, record, and sum types, as well as pattern matching. All instances of sum types are required to be labeled with a type or type synonym to ensure the uniqueness of types.
