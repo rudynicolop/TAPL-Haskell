@@ -19,7 +19,7 @@ type Tuple t = ALG N.Natural t
 
 type Record t = ALG Label t
 
-type Sum t = ALG Label t
+type Sum t = ALG Label (Maybe t)
 
 data Type =
   TSyn TypeSyn -- type synonym
@@ -31,7 +31,7 @@ data Type =
 data Pattern =
   PTup (Tuple Pattern)
   | PRec (Record Pattern)
-  | PSum TypeSyn Label Pattern
+  | PSum TypeSyn Label (Maybe Pattern)
 
 data Expr =
   EVar Id -- variable
@@ -42,6 +42,6 @@ data Expr =
   | ETupPrj Expr N.Natural -- tuple projection
   | ERec (Record Expr) -- record expression
   | ERecPrj Expr Label -- record projection
-  | ESum TypeSyn Label Expr -- sum/variant expression
+  | ESum TypeSyn Label (Maybe Expr) -- sum/variant expression
   | EMatch Expr [(Pattern,Expr)] -- pattern match
   | ESyn TypeSyn Type Expr -- type synonym definition
