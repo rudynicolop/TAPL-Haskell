@@ -41,7 +41,8 @@ data Value =
 data Op = Add | Eq | And
 
 data Expr =
-  EValue Value -- values subset expressions
+  EVar Id
+  | EValue Value -- values subset expressions
   | EBOp Op Expr Expr -- binary operations
   | ECnd Expr Expr Expr -- conditionals
   | EApp Expr Expr -- function application
