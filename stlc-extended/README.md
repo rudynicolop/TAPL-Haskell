@@ -28,7 +28,7 @@ e ::= x
     | {l1=e1; l2=e2; ...; ln=en}
     | e.li
     | t.li e
-    | match (e as t) with
+    | match e with
       `|` p1 -> e1
       ...
       `|` pn -> en
@@ -77,14 +77,19 @@ Expressions are checked under the judgment `D,G |- e : t`.
                         G |- t.li e : t
 
    D,G |- e : t   D,G |- pi : t -| G'   D,G' |- ei : t'
+                  {p1,...,pn} exhaust t
 ----------------------------------------------------------
- D,G |- match (e as t) with ... `|` pi -> ei ... end : t'
+     D,G |- match e with ... `|` pi -> ei ... end : t'
 
     D[X->t],G |- e : t'
 -----------------------------
  D,G |- type X = t in e : t'
 ```
-The match-case is degenerate: it needs to check whether all possible patterns are checked.
+
+Pattern-matching must be exhaustive. This is defined by the judgment `{p1,...,pn} exhaust t` for a particular type `t`.
+```
+
+```
 
 Types/type-synonyms are confirmed to be well-defined under the judgment `D |- t ok`.
 ```
