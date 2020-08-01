@@ -17,8 +17,8 @@ extra-source-files:  CHANGELOG.md
 
 executable mini-extended-stlc
   main-is:             Main.hs
-  other-modules: AST
+  other-modules: AST Check
   -- other-extensions:
-  build-depends:       base >=4.13 && <4.14, containers
+  build-depends:       base >=4.13 && <4.14, containers, mtl
   -- hs-source-dirs:
   default-language:    Haskell2010
