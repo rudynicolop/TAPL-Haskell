@@ -25,6 +25,7 @@ data Pattern t =
   | PPair (t (Pattern t)) (t (Pattern t))
   | PLeft Type Type (t (Pattern t))
   | PRight Type Type (t (Pattern t))
+  | POr (t (Pattern t)) (t (Pattern t))
 
 instance Eq (t (Pattern t)) => Eq (Pattern t) where
     (==) = (==)
@@ -89,6 +90,7 @@ instance (Annotation t, Show (t (Pattern t))) => Show (Pattern t) where
   show (PPair p1 p2)  = "(" ++ (show p1) ++ ", " ++ (show p2) ++ ")"
   show (PLeft a b p)  = "(Left " ++ (show (TEither a b)) ++ (show p) ++ ")"
   show (PRight a b p) = "(Right " ++ (show (TEither a b)) ++ (show p) ++ ")"
+  show (POr p1 p2)    = "(" ++ (show p1) ++ " | " ++ (show p2) ++ ")"
 
 instance (Annotation t, Show (t (Pattern t)), Show (t (Expr t))) => Show (Expr t) where
   show (EName x) = gx x
