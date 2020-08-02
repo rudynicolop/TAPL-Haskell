@@ -57,4 +57,18 @@ check g esnd@(ESnd e) = do
     checkSnd (R t' e') = ERR.throwError $
       "In expression " ++ (show esnd) ++ ", sub-expression " ++ (show e') ++
         " is expected to have a product type, but has type " ++ (show t')
-check _ _ = Left "need to implement more cases"
+check g left@(ELeft a b e) = do
+  R a' e' <- check g $ ge e
+  if a' == a
+    then return $ R (TEither a b) (ELeft a b (T a e'))
+    else ERR.throwError $ "In expression " ++ (show left) ++
+      ", sub-expression " ++ (show e') ++ " is expected to have type " ++
+      (show a) ++ ", but has type " ++ (show a')
+check g right@(ERight a b e) = do
+  R b' e' <- check g $ ge e
+  if b' == b
+    then return $ R (TEither a b) (ELeft a b (T b e'))
+    else ERR.throwError $ "In expression " ++ (show right) ++
+      ", sub-expression " ++ (show e') ++ " is expected to have type " ++
+      (show b) ++ ", but has type " ++ (show b')
+check _ _ = ERR.throwError "need to implement more cases"
