@@ -226,8 +226,22 @@ defM [] = return []
 defM ((PBase _ : trow) : ps) = do
   ps' <- defM ps
   return $ trow : ps'
-defM ((POr (T _ p1) (T _ p2) : trow) : ps) = do
-  tr' <- defM [p1 : trow, p2 : trow]
-  ps' <- defM ps
-  return $ tr' ++ ps'
+defM ((POr (T _ p1) (T _ p2) : trow) : ps) =
+  defM $ (p1 : trow) : (p2 : trow) : ps
+defM ((_ : _) : ps) = defM ps
 defM _ = ERR.throwError "Oops..."
+
+-- Specialized Matrix
+
+sUnit :: [[WPat]] -> Either String [[WPat]]
+sUnit [] = return []
+sUnit ((PBase _ : trow) : ps) = do
+  ps' <- defM ps
+  return $ trow : ps'
+sUnit ((PUnit : trow) : ps) = do
+  ps' <- defM ps
+  return $ trow : ps'
+sUnit ((POr (T _ p1) (T _ p2) : trow) : ps) =
+  sUnit $ (p1 : trow) : (p2 : trow) : ps
+sUnit ((_ : _) : ps) = sUnit ps
+sUnit _ = ERR.throwError "Oops..."
