@@ -219,3 +219,15 @@ sigma (TEither a b) ps = any leftCom ps && any rightCom ps
     rightCom :: WPat -> Bool
     rightCom (PRight a' b' _) = a' == a && b' == b
     rightCom _                = False
+
+-- Default Matrix
+defM :: [[WPat]] -> Either String [[WPat]]
+defM [] = return []
+defM ((PBase _ : trow) : ps) = do
+  ps' <- defM ps
+  return $ trow : ps'
+defM ((POr (T _ p1) (T _ p2) : trow) : ps) = do
+  tr' <- defM [p1 : trow, p2 : trow]
+  ps' <- defM ps
+  return $ tr' ++ ps'
+defM _ = ERR.throwError "Oops..."
