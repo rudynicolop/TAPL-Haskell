@@ -201,3 +201,21 @@ urec pmat []
   | all null pmat = return False
   | otherwise = ERR.throwError "Implementation bug...probs..."
 urec _ _ = ERR.throwError "More cases to implement"
+
+-- Complete Signature Sigma
+sigma :: Type -> [WPat] -> Bool
+sigma TUnit ps = any ((==) PUnit) ps
+sigma (TFun _ _) _ = False
+sigma (TPair a b) ps = any pairCom ps
+  where
+    pairCom :: WPat -> Bool
+    pairCom (PPair _ _) = True
+    pairCom _           = False
+sigma (TEither a b) ps = any leftCom ps && any rightCom ps
+  where
+    leftCom :: WPat -> Bool
+    leftCom (PLeft a' b' _) = a' == a && b' == b
+    leftCom _               = False
+    rightCom :: WPat -> Bool
+    rightCom (PRight a' b' _) = a' == a && b' == b
+    rightCom _                = False
