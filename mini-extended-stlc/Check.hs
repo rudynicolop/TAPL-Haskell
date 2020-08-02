@@ -235,7 +235,7 @@ defM _ = ERR.throwError "Oops..."
 
 sUnit :: [[WPat]] -> Either String [[WPat]]
 sUnit [] = return []
-sUnit ((PBase (T TUnit ()) : trow) : ps) = do
+sUnit ((PBase (T TUnit _) : trow) : ps) = do
   ps' <- sUnit ps
   return $ trow : ps'
 sUnit ((PUnit : trow) : ps) = do
@@ -248,11 +248,26 @@ sUnit _ = ERR.throwError "Oops..."
 
 sPair :: [[WPat]] -> Either String [[WPat]]
 sPair [] = return []
-sPair ((PBase (T (TPair a b) ()) : trow) : ps) = do
+sPair ((PBase (T (TPair a b) _) : trow) : ps) = do
   ps' <- sPair ps
   return $ (PBase (T a ()) : PBase (T b ()) : trow) : ps'
-sPair ((PPair (T a p1) (T b p2) : trow) : ps) = do
+sPair ((PPair (T _ p1) (T _ p2) : trow) : ps) = do
   ps' <- sPair ps
   return $ (p1 : p2 : trow) : ps'
+sPair ((POr (T (TPair _ _) p1) (T (TPair _ _) p2) : trow) : ps) =
+  sPair $ (p1 : trow) : (p2 : trow) : ps
 sPair ((_ : _) : ps) = sPair ps
 sPair _ = ERR.throwError "Oops..."
+
+sLeft :: [[WPat]] -> Either String [[WPat]]
+sLeft [] = return []
+sLeft ((PBase (T (TEither a _) _) : trow) : ps) = do
+  ps' <- sLeft ps
+  return $ (PBase (T a ()) : trow) : ps'
+sLeft ((PLeft _ _ (T _ p) : trow) : ps) = do
+  ps' <- sLeft ps
+  return $ (p : trow) : ps'
+sLeft ((POr (T (TEither _ _) p1) (T (TEither _ _) p2) : trow) : ps) =
+  sLeft $ (p1 : trow) : (p2 : trow) : ps
+sLeft ((_ : _) : ps) = sLeft ps
+sLeft _ = ERR.throwError "Oops..."
