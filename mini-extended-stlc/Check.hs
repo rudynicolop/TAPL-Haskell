@@ -235,13 +235,24 @@ defM _ = ERR.throwError "Oops..."
 
 sUnit :: [[WPat]] -> Either String [[WPat]]
 sUnit [] = return []
-sUnit ((PBase _ : trow) : ps) = do
-  ps' <- defM ps
+sUnit ((PBase (T TUnit ()) : trow) : ps) = do
+  ps' <- sUnit ps
   return $ trow : ps'
 sUnit ((PUnit : trow) : ps) = do
-  ps' <- defM ps
+  ps' <- sUnit ps
   return $ trow : ps'
-sUnit ((POr (T _ p1) (T _ p2) : trow) : ps) =
+sUnit ((POr (T TUnit p1) (T TUnit p2) : trow) : ps) =
   sUnit $ (p1 : trow) : (p2 : trow) : ps
 sUnit ((_ : _) : ps) = sUnit ps
 sUnit _ = ERR.throwError "Oops..."
+
+sPair :: [[WPat]] -> Either String [[WPat]]
+sPair [] = return []
+sPair ((PBase (T (TPair a b) ()) : trow) : ps) = do
+  ps' <- sPair ps
+  return $ (PBase (T a ()) : PBase (T b ()) : trow) : ps'
+sPair ((PPair (T a p1) (T b p2) : trow) : ps) = do
+  ps' <- sPair ps
+  return $ (p1 : p2 : trow) : ps'
+sPair ((_ : _) : ps) = sPair ps
+sPair _ = ERR.throwError "Oops..."
