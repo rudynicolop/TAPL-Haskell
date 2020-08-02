@@ -200,7 +200,48 @@ urec [] _    = return True
 urec pmat []
   | all null pmat = return False
   | otherwise = ERR.throwError "Implementation bug...probs..."
-urec _ _ = ERR.throwError "More cases to implement"
+urec pmat (PUnit:qs) = do
+  s <- sUnit pmat
+  urec s qs
+urec pmat (PPair (T _ p1) (T _ p2) : qs) = do
+  s <- sPair pmat
+  urec s (p1:p2:qs)
+urec pmat (PLeft _ _ (T _ p) : qs) = do
+  s <- sLeft pmat
+  urec s (p:qs)
+urec pmat (PRight _ _ (T _ p) : qs) = do
+  s <- sRight pmat
+  urec s (p:qs)
+urec pmat (PBase (T t _) : qs) = do
+  firstColumn <- mapM getFirstColumn pmat
+  if sigma t firstColumn
+    then case t of
+      TUnit -> do
+        s <- sUnit pmat
+        urec s qs
+      (TFun _ _) -> do -- this case should never fire
+        d' <- defM pmat
+        urec d' qs
+      (TPair a b) -> do
+        s <- sPair pmat
+        urec s $ PBase (T a ()) : PBase (T b ()) : qs
+      (TEither a b) -> do
+        sl <- sLeft pmat
+        sr <- sRight pmat
+        r1 <- urec sl (PBase (T a ()) : qs)
+        r2 <- urec sr (PBase (T b ()) : qs)
+        return $ r1 || r2
+    else do
+      d' <- defM pmat
+      urec d' qs
+  where
+    getFirstColumn :: [WPat] -> Either String WPat
+    getFirstColumn []      = ERR.throwError "Non-empty rows expected"
+    getFirstColumn (h : _) = return h
+urec pmat (POr (T _ p1) (T _ p2) : qs) = do
+  r1 <- urec pmat $ p1 : qs
+  r2 <- urec pmat $ p2 : qs
+  return $ r1 || r2
 
 -- Complete Signature Sigma
 sigma :: Type -> [WPat] -> Bool
