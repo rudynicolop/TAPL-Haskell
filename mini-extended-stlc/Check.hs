@@ -3,6 +3,7 @@
 module Check where
 
 import           AST
+import qualified Control.Monad        as CM
 import qualified Control.Monad.Except as ERR
 import qualified Data.Map.Strict      as M
 
@@ -16,6 +17,14 @@ data RP = RP Gamma TPattern
 
 type ResultP = Either String RP
 
+data RF = RF Type [Gamma] [TPattern]
+
+type FoldResult = Either String RF
+
+type RM = (Type, T TExpr)
+
+type MapResult = Either String RM
+
 check :: (Annotation t, Show (t (Pattern t)), Show (t (Expr t))) =>
   Gamma -> Expr t -> Result
 check g (EName ax) =
@@ -24,6 +33,13 @@ check g (EName ax) =
       Nothing -> ERR.throwError $ "Unbound variable " ++ x
       Just t  -> return $ R t $ EName $ T t x
 check g EUnit = return $ R TUnit $ EUnit
+check g fun@(EFun p t e) = do
+  RP g' p' <- checkPattern g t $ gp p
+  if exhaustive t [p'] then do
+    R t' e' <- check g' $ ge e
+    return $ R (TFun t t') (EFun (T t p') t (T t' e'))
+    else ERR.throwError $ "In function " ++ (show fun) ++
+      ", pattern " ++ (show p') ++ " is not exhaustive"
 check g app@(EApp e1 e2) = do
   e1' <- check g $ ge e1
   e2' <- check g $ ge e2
@@ -39,6 +55,14 @@ check g app@(EApp e1 e2) = do
     checkapp (R t1 _) _ = ERR.throwError $
       "In application " ++ (show app) ++
         ", expression " ++ (show e1) ++ " has type " ++ (show t1)
+check g elet@(ELet p e1 e2) = do
+  R t1 e1' <- check g $ ge e1
+  RP g' p' <- checkPattern g t1 $ gp p
+  if exhaustive t1 [p'] then do
+    R t2 e2' <- check g' $ ge e2
+    return $ R t2 (ELet (T t1 p') (T t1 e1') (T t2 e2'))
+  else ERR.throwError $ "In let-expression " ++ (show elet) ++
+    ", pattern " ++ (show p') ++ " is not-exhaustive"
 check g (EPair e1 e2) = do
   R a e1' <- check g $ ge e1
   R b e2' <- check g $ ge e2
@@ -75,7 +99,40 @@ check g right@(ERight a b e) = do
     else ERR.throwError $ "In expression " ++ (show right) ++
       ", sub-expression " ++ (show e') ++ " is expected to have type " ++
       (show b) ++ ", but has type " ++ (show b')
-check _ _ = ERR.throwError "need to implement more cases"
+check g match@(EMatch e cases) = do
+  R t e' <- check g $ ge e
+  let (ps,es) = unzip cases in do
+    RF _ gs' ps' <- CM.foldM foldHelper (RF t [] []) ps
+    if exhaustive t ps'
+      then do
+        tes <- mapM mapHelper $ zip (reverse gs') es
+        let (ts',es') = unzip tes in do
+          typeResult <- CM.foldM typeEqual Nothing ts'
+          case typeResult of
+            Nothing -> do
+              ERR.throwError $ "Match-expression " ++
+                (show match) ++ " has no cases"
+            (Just t') -> do
+              let ps'' = map (\p' -> T t p') ps' in
+                return $ R t' (EMatch (T t e') $ zip ps'' es')
+      else ERR.throwError $ "Match-expression " ++
+        (show match) ++ " has inexhaustive patterns"
+  where
+    foldHelper :: (Annotation t, Show (t (Pattern t))) => RF -> t (Pattern t) -> FoldResult
+    foldHelper (RF t gs ps) p = do
+      RP g' p' <- checkPattern g t $ gp p
+      return $ RF t (g':gs) (p':ps)
+    mapHelper :: (Annotation t, Show (t (Pattern t)), Show (t (Expr t))) => (Gamma, t (Expr t)) -> MapResult
+    mapHelper (gc,ec) = do
+      R t' ec' <- check gc $ ge ec
+      return (t', T t' ec')
+    typeEqual :: Maybe Type -> Type -> Either String (Maybe Type)
+    typeEqual Nothing t = return $ Just t
+    typeEqual (Just t') t
+      | t' == t = return $ Just t
+      | otherwise = ERR.throwError $
+        "Case-expressions in match-expression " ++ (show match) ++
+          " have different types " ++ (show t) ++ " and " ++ (show t')
 
 checkPattern :: (Annotation t, Show (t (Pattern t))) =>
   Gamma -> Type -> Pattern t -> ResultP
@@ -116,5 +173,5 @@ checkPattern _ t p = do
     " does not fit with expected type " ++ (show t)
 
 -- exhaustive patterns
-exhaustive :: [TPattern] -> Type -> Bool
+exhaustive :: Type -> [TPattern] -> Bool
 exhaustive _ _ = True
