@@ -271,3 +271,16 @@ sLeft ((POr (T (TEither _ _) p1) (T (TEither _ _) p2) : trow) : ps) =
   sLeft $ (p1 : trow) : (p2 : trow) : ps
 sLeft ((_ : _) : ps) = sLeft ps
 sLeft _ = ERR.throwError "Oops..."
+
+sRight :: [[WPat]] -> Either String [[WPat]]
+sRight [] = return []
+sRight ((PBase (T (TEither _ b) _) : trow) : ps) = do
+  ps' <- sRight ps
+  return $ (PBase (T b ()) : trow) : ps'
+sRight ((PRight _ _ (T _ p) : trow) : ps) = do
+  ps' <- sRight ps
+  return $ (p : trow) : ps
+sRight ((POr (T _ p1) (T _ p2) : trow) : ps) = do
+  sRight $ (p1 : trow) : (p2 : trow) : ps
+sRight ((_ : _) : ps) = sRight ps
+sRight _ = ERR.throwError "Oops..."
