@@ -37,7 +37,8 @@ check g (EName ax) =
 check g EUnit = return $ R TUnit $ EUnit
 check g fun@(EFun p t e) = do
   RP g' p' <- checkPattern g t $ gp p
-  if exhaustive t [p'] then do
+  exhausts <- exhaustive t [p']
+  if exhausts then do
     R t' e' <- check g' $ ge e
     return $ R (TFun t t') (EFun (T t p') t (T t' e'))
     else ERR.throwError $ "In function " ++ (show fun) ++
@@ -60,7 +61,8 @@ check g app@(EApp e1 e2) = do
 check g elet@(ELet p e1 e2) = do
   R t1 e1' <- check g $ ge e1
   RP g' p' <- checkPattern g t1 $ gp p
-  if exhaustive t1 [p'] then do
+  exhausts <- exhaustive t1 [p']
+  if exhausts then do
     R t2 e2' <- check g' $ ge e2
     return $ R t2 (ELet (T t1 p') (T t1 e1') (T t2 e2'))
   else ERR.throwError $ "In let-expression " ++ (show elet) ++
@@ -105,7 +107,8 @@ check g match@(EMatch e cases) = do
   R t e' <- check g $ ge e
   let (ps,es) = unzip cases in do
     RF _ gs' ps' <- CM.foldM foldHelper (RF t [] []) ps
-    if exhaustive t ps'
+    exhausts <- exhaustive t ps'
+    if exhausts
       then do
         tes <- mapM mapHelper $ zip (reverse gs') es
         let (ts',es') = unzip tes in do
@@ -177,5 +180,24 @@ checkPattern _ t p = do
     " does not fit with expected type " ++ (show t)
 
 -- exhaustive patterns
-exhaustive :: Type -> [TPattern] -> Bool
-exhaustive _ _ = True
+exhaustive :: Type -> [TPattern] -> Either String Bool
+exhaustive t ps =
+  urec (map (\p -> [patToWpat p]) ps) [PBase (T t ())]
+
+type WPat = Pattern () T
+
+patToWpat :: TPattern -> WPat
+patToWpat (PBase (T t _))             = PBase (T t ())
+patToWpat PUnit                       = PUnit
+patToWpat (PPair (T t1 p1) (T t2 p2)) = PPair (T t1 (patToWpat p1)) (T t2 (patToWpat p2))
+patToWpat (PLeft a b (T t p))         = PLeft a b (T t (patToWpat p))
+patToWpat (PRight a b (T t p))        = PRight a b (T t (patToWpat p))
+patToWpat (POr (T t1 p1) (T t2 p2))   = POr (T t1 (patToWpat p1)) (T t2 (patToWpat p2))
+
+-- URec
+urec :: [[WPat]] -> [WPat] -> Either String Bool
+urec [] _    = return True
+urec pmat []
+  | all null pmat = return False
+  | otherwise = ERR.throwError "Implementation bug...probs..."
+urec _ _ = ERR.throwError "More cases to implement"
