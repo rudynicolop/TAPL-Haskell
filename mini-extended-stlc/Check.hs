@@ -1,4 +1,6 @@
 {-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Check where
 
@@ -25,7 +27,7 @@ type RM = (Type, T TExpr)
 
 type MapResult = Either String RM
 
-check :: (Annotation t, Show (t (Pattern t)), Show (t (Expr t))) =>
+check :: (Annotation t, Show (t (Pat t)), Show (t (Expr t))) =>
   Gamma -> Expr t -> Result
 check g (EName ax) =
   let x = gx ax in do
@@ -118,11 +120,11 @@ check g match@(EMatch e cases) = do
       else ERR.throwError $ "Match-expression " ++
         (show match) ++ " has inexhaustive patterns"
   where
-    foldHelper :: (Annotation t, Show (t (Pattern t))) => RF -> t (Pattern t) -> FoldResult
+    foldHelper :: (Annotation t, Show (t (Pat t))) => RF -> t (Pat t) -> FoldResult
     foldHelper (RF t gs ps) p = do
       RP g' p' <- checkPattern g t $ gp p
       return $ RF t (g':gs) (p':ps)
-    mapHelper :: (Annotation t, Show (t (Pattern t)), Show (t (Expr t))) => (Gamma, t (Expr t)) -> MapResult
+    mapHelper :: (Annotation t, Show (t (Pat t)), Show (t (Expr t))) => (Gamma, t (Expr t)) -> MapResult
     mapHelper (gc,ec) = do
       R t' ec' <- check gc $ ge ec
       return (t', T t' ec')
@@ -134,10 +136,12 @@ check g match@(EMatch e cases) = do
         "Case-expressions in match-expression " ++ (show match) ++
           " have different types " ++ (show t) ++ " and " ++ (show t')
 
-checkPattern :: (Annotation t, Show (t (Pattern t))) =>
-  Gamma -> Type -> Pattern t -> ResultP
-checkPattern g t PWild     = return $ RP g PWild
-checkPattern g t (PName x) = return $ RP (M.insert (gx x) t g) (PName (T t $ gx x))
+checkPattern :: (Annotation t, Show (t (Pat t))) =>
+  Gamma -> Type -> Pat t -> ResultP
+checkPattern g t (PBase pb) = do
+  case gopt pb of
+    Nothing  -> return $ RP g (PBase (T t Nothing))
+    (Just x) -> return $ RP (M.insert x t g) (PBase (T t (Just x)))
 checkPattern g TUnit PUnit = return $ RP g PUnit
 checkPattern g (TPair a b) pat@(PPair p1 p2) = do
   RP g1 p1' <- checkPattern g a $ gp p1

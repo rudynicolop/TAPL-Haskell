@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
 
@@ -18,30 +20,33 @@ instance Show Type where
   show (TPair a b)   = "(" ++ (show a) ++ " * " ++ (show b) ++ ")"
   show (TEither a b) = "(" ++ (show a) ++ " + " ++ (show b) ++ ")"
 
-data Pattern t =
-  PWild
-  | PName (t Id)
+data Pattern pb t =
+  PBase (t pb)
   | PUnit
-  | PPair (t (Pattern t)) (t (Pattern t))
-  | PLeft Type Type (t (Pattern t))
-  | PRight Type Type (t (Pattern t))
-  | POr (t (Pattern t)) (t (Pattern t))
+  | PPair (t (Pattern pb t)) (t (Pattern pb t))
+  | PLeft Type Type (t (Pattern pb t))
+  | PRight Type Type (t (Pattern pb t))
+  | POr (t (Pattern pb t)) (t (Pattern pb t))
 
-instance Eq (t (Pattern t)) => Eq (Pattern t) where
+instance Eq (t (Pattern pb t)) => Eq (Pattern pb t) where
     (==) = (==)
+
+type PName = Maybe Id
+
+type Pat t = Pattern PName t
 
 data Expr t =
   EName (t Id)
   | EUnit
-  | EFun (t (Pattern t)) Type (t (Expr t))
+  | EFun (t (Pat t)) Type (t (Expr t))
   | EApp (t (Expr t)) (t (Expr t))
-  | ELet (t (Pattern t)) (t (Expr t)) (t (Expr t))
+  | ELet (t (Pat t)) (t (Expr t)) (t (Expr t))
   | EPair (t (Expr t)) (t (Expr t))
   | EFst (t (Expr t))
   | ESnd (t (Expr t))
   | ELeft Type Type (t (Expr t))
   | ERight Type Type (t (Expr t))
-  | EMatch (t (Expr t)) [((t (Pattern t)),(t (Expr t)))]
+  | EMatch (t (Expr t)) [((t (Pat t)),(t (Expr t)))]
 
 instance Eq (t (Expr t)) => Eq (Expr t) where
     (==) = (==)
@@ -60,39 +65,44 @@ data T e = T Type e
 instance Show e => Show (T e) where
   show (T _ e) = show e
 
-type BPattern = Pattern B
+type BPattern = Pat B
 
 type BExpr = Expr B
 
-type TPattern = Pattern T
+type TPattern = Pat T
 
 type TExpr = Expr T
 
 class Annotation t where
   gx :: t (Id) -> Id
-  gp :: t (Pattern t) -> Pattern t
+  gp :: t (Pat t) -> Pat t
   ge :: t (Expr t) -> Expr t
+  gopt :: t PName -> PName
 
 instance Annotation B where
   gx (B x) = x
   gp (B p) = p
   ge (B e) = e
+  gopt (B o) = o
 
 instance Annotation T where
   gx (T _ x) = x
   gp (T _ p) = p
   ge (T _ e) = e
+  gopt (T _ o) = o
 
-instance (Annotation t, Show (t (Pattern t))) => Show (Pattern t) where
-  show PWild          = "_"
-  show (PName x)      = gx x
-  show PUnit          = "()"
-  show (PPair p1 p2)  = "(" ++ (show p1) ++ ", " ++ (show p2) ++ ")"
-  show (PLeft a b p)  = "(Left " ++ (show (TEither a b)) ++ (show p) ++ ")"
-  show (PRight a b p) = "(Right " ++ (show (TEither a b)) ++ (show p) ++ ")"
-  show (POr p1 p2)    = "(" ++ (show p1) ++ " | " ++ (show p2) ++ ")"
+instance (Annotation t, Show (t (Pat t))) => Show (Pat t) where
+  show (PBase pb) =
+    case gopt pb of
+      Nothing  -> "_"
+      (Just x) -> x
+  show PUnit            = "()"
+  show (PPair p1 p2)    = "(" ++ (show p1) ++ ", " ++ (show p2) ++ ")"
+  show (PLeft a b p)    = "(Left " ++ (show (TEither a b)) ++ (show p) ++ ")"
+  show (PRight a b p)   = "(Right " ++ (show (TEither a b)) ++ (show p) ++ ")"
+  show (POr p1 p2)      = "(" ++ (show p1) ++ " | " ++ (show p2) ++ ")"
 
-instance (Annotation t, Show (t (Pattern t)), Show (t (Expr t))) => Show (Expr t) where
+instance (Annotation t, Show (t (Pat t)), Show (t (Expr t))) => Show (Expr t) where
   show (EName x) = gx x
   show EUnit = "()"
   show (EFun p t e) = "(fun " ++ (show p) ++ " : " ++ (show t) ++ " => " ++ (show e) ++ ")"
