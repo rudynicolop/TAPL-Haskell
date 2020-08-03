@@ -62,6 +62,7 @@ Expr : '()' {EUnit}
   | Left Type '+' Type Expr {ELeft $2 $4 (B $5)}
   | Right Type '+' Type Expr {ERight $2 $4 (B $5)}
   | match Expr with matchSeq end {EMatch (B $2) $4}
+  | '(' Expr ')' {$2} 
 
 matchSeq : matchCase {[$1]}
   | matchCase matchSeq {$1 : $2}
