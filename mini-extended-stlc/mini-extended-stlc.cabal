@@ -15,7 +15,7 @@ maintainer:          rnp39@cornell.edu
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
-executable mini-extended-stlc
+executable stlc
   main-is:             Main.hs
   other-modules: AST Check Lexer Parser
   -- other-extensions:
