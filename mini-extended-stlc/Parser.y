@@ -38,13 +38,14 @@ var {L.VAR $$}
 %nonassoc '(' ')'
 %nonassoc '=>'
 %nonassoc fun ':'
-%nonassoc Left Right
+%nonassoc var
 %left '+' '*' '||'
-%nonassoc var unit
+%nonassoc unit
 %nonassoc let '=' in
 %nonassoc match with '|' end
 %left ','
 %nonassoc fst snd
+%nonassoc Left Right
 %left APP
 %right '->'
 %nonassoc '()'
@@ -61,10 +62,10 @@ Expr : '()' {EUnit}
   | snd Expr {ESnd (B $2)}
   | Left Type '+' Type Expr {ELeft $2 $4 (B $5)}
   | Right Type '+' Type Expr {ERight $2 $4 (B $5)}
-  | match Expr with matchSeq end {EMatch (B $2) $4}
-  | '(' Expr ')' {$2} 
+  | match Expr with matchSeq {EMatch (B $2) $4}
+  | '(' Expr ')' {$2}
 
-matchSeq : matchCase {[$1]}
+matchSeq : matchCase end {[$1]}
   | matchCase matchSeq {$1 : $2}
 
 matchCase : '|' Pattern '=>' Expr {(B $2, B $4)}
