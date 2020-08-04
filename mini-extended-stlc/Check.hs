@@ -341,7 +341,7 @@ sRight ((PBase (T (TEither _ b) _) : trow) : ps) = do
   return $ (PBase (T b ()) : trow) : ps'
 sRight ((PRight _ _ (T _ p) : trow) : ps) = do
   ps' <- sRight ps
-  return $ (p : trow) : ps
+  return $ (p : trow) : ps'
 sRight ((POr (T _ p1) (T _ p2) : trow) : ps) = do
   sRight $ (p1 : trow) : (p2 : trow) : ps
 sRight ((_ : _) : ps) = sRight ps

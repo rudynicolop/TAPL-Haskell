@@ -27,6 +27,17 @@ let f =
   | Right ((u -> u) * u) ((u -> u) * u) (f,y) => f y
   end in
 
+let h = fun ((w,x),(y,z)) : (u * u) * (u * u) => w in
+
+let g =
+  fun q : (u + u) + (u + u) =>
+  match q with
+  Left (u + u) (u + u) (Left u u _) => q
+  | Left (u + u) (u + u) (Right u u _) => q
+  | Right (u + u) (u + u) (Left u u _) => q
+  | Right (u + u) (u + u) (Right u u _) => q
+  end in
+
 let and =
   fun x : (u + u) * (u + u) =>
   match x with

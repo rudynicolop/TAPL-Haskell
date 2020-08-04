@@ -98,8 +98,8 @@ instance (Annotation t, Show (t (Pat t))) => Show (Pat t) where
       (Just x) -> x
   show PUnit            = "()"
   show (PPair p1 p2)    = "(" ++ (show p1) ++ ", " ++ (show p2) ++ ")"
-  show (PLeft a b p)    = "(Left " ++ (show (TEither a b)) ++ " " ++ (show p) ++ ")"
-  show (PRight a b p)   = "(Right " ++ (show (TEither a b)) ++ " " ++ (show p) ++ ")"
+  show (PLeft a b p)    = "(Left " ++ (show a) ++ " " ++ (show b) ++ " " ++ (show p) ++ ")"
+  show (PRight a b p)   = "(Right " ++ (show a) ++ " " ++ (show b) ++ " " ++ (show p) ++ ")"
   show (POr p1 p2)      = "(" ++ (show p1) ++ " | " ++ (show p2) ++ ")"
 
 instance (Annotation t, Show (t (Pat t)), Show (t (Expr t))) => Show (Expr t) where
@@ -111,8 +111,8 @@ instance (Annotation t, Show (t (Pat t)), Show (t (Expr t))) => Show (Expr t) wh
   show (EPair e1 e2) = "(" ++ (show e1) ++ ", " ++ (show e2) ++ ")"
   show (EFst e) = "(fst " ++ (show e) ++ ")"
   show (ESnd e) = "(snd " ++ (show e) ++ ")"
-  show (ELeft a b e) = "(Left " ++ (show (TEither a b)) ++ " " ++ (show e) ++ ")"
-  show (ERight a b e) = "(Right " ++ (show (TEither a b)) ++ " " ++ (show e) ++ ")"
+  show (ELeft a b e) = "(Left " ++ (show a) ++ " " ++ (show b) ++ " " ++ (show e) ++ ")"
+  show (ERight a b e) = "(Right " ++ (show a) ++ " " ++ (show b) ++ " " ++ (show e) ++ ")"
   show (EMatch e cases) =
     (foldl (\ acc (p',e') -> acc ++ "\n| " ++ (show p') ++ " => " ++ (show e'))
       ("match " ++ (show e) ++ " with ") cases) ++ "\nend"
