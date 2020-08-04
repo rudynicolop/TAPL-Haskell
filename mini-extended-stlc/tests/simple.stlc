@@ -1,5 +1,4 @@
 fun x : unit + unit =>
 match x with
-Left unit + unit x  => x
-| Right unit + unit x => x
+Left unit + unit x || Right unit + unit x => x
 end

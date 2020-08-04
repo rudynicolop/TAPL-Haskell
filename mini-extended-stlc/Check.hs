@@ -257,18 +257,18 @@ urec pmat (POr (T _ p1) (T _ p2) : qs) = do
 
 -- Complete Signature Sigma
 sigma :: Type -> [WPat] -> Bool
-sigma TUnit ps = any unitCom ps
+sigma TUnit ps = any (root unitCom) ps
   where
     unitCom :: WPat -> Bool
     unitCom PUnit = True
     unitCom _     = False
 sigma (TFun _ _) _ = False
-sigma (TPair a b) ps = any pairCom ps
+sigma (TPair a b) ps = any (root pairCom) ps
   where
     pairCom :: WPat -> Bool
     pairCom (PPair _ _) = True
     pairCom _           = False
-sigma (TEither a b) ps = any leftCom ps && any rightCom ps
+sigma (TEither a b) ps = any (root leftCom) ps && any (root rightCom) ps
   where
     leftCom :: WPat -> Bool
     leftCom (PLeft a' b' _) = a' == a && b' == b
@@ -276,6 +276,11 @@ sigma (TEither a b) ps = any leftCom ps && any rightCom ps
     rightCom :: WPat -> Bool
     rightCom (PRight a' b' _) = a' == a && b' == b
     rightCom _                = False
+
+-- root constructor search
+root :: (WPat -> Bool) -> WPat -> Bool
+root f (POr (T _ p1) (T _ p2)) = root f p1 || root f p2
+root f p                       = f p
 
 -- Default Matrix
 defM :: [[WPat]] -> Either String [[WPat]]
