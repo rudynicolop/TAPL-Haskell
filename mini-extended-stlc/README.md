@@ -69,7 +69,36 @@ Let `G` be the typing environment.
  G |- e : a   G |- pi : a -| Gi   pi exhaust a   Gi |- ei : b
 --------------------------------------------------------------
        G |- match e with p1 => e1 | ... | pn => en : b
+
+-----------------
+ G |- _ : t -| G
+
+--------------------------
+ G |- x : t -> (x:t :: G)
+
+------------------
+ G |- () : u -| G
+
+ G |- p1 : a -| G1   G |- p2 : b -| G2
+    (FV p1) and (FV p2) are disjoint
+---------------------------------------
+ G |- p1, p2 : a * b -| union G1 G2
+
+       G |- p : a -| G'
+-------------------------------
+ G |- Left a b p : a + b -| G'
+
+        G |- p : b -| G'
+--------------------------------
+ G |- Right a b p : a + b -| G'
+
+
+ G |- p1 : t -| G'   G |- p2 : t -| G'
+---------------------------------------
+        G |- p1 || p2 : t -| G'
 ```
+
+`p exhausts t` denotes that pattern `p`, or a set of patterns, is exhaustive with respect to type `t`. I have implemented the algorithm as described in [this Inria article](http://moscova.inria.fr/~maranget/papers/warn/index.html)
 
 # Idiosyncrasies
 
