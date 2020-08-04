@@ -17,7 +17,7 @@ extra-source-files:  CHANGELOG.md
 
 executable stlc
   main-is:             Main.hs
-  other-modules: AST Check Lexer Parser
+  other-modules: AST Check Lexer Parser Eval
   -- other-extensions:
   build-depends:       base >=4.13 && <4.14, containers, mtl, utf8-string, array
   -- hs-source-dirs:
