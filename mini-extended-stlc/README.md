@@ -7,17 +7,19 @@ cabal new-run stlc -- tests/simple.stlc
 
 # Syntax
 
-This language is composed of types, `t,a,b` patterns `p`, and expressions `e`. Let `x,y,z` range over variables.
+This language is composed of types, `t,a,b` patterns `p`, and expressions `e`. Let `x,y,z` range over variables, and `v` range over values.
 ```
 t,a,b ::= u | a -> b | a * b | a + b
 
 p ::= _ | x | () | p1, p2
   | Left a b p | Right a b p | p1 || p2
 
-e :: x | () | fun p : t => e | e1 e2
+e ::= x | () | fun p : t => e | e1 e2
   | let p = e1 in e2 | e1, e2 | fst e | snd e
   | Left a b e | Right a b e
   | match e with p1 => e1 | ... | pn => en
+
+v ::= () | fun p : t => e | v1, v2 | Left a b v | Right a b v
 ```
 `u` is the unit type inhabited by `()`. `||` is the or-pattern.
 
@@ -98,7 +100,72 @@ Let `G` be the typing environment.
         G |- p1 || p2 : t -| G'
 ```
 
-`p exhausts t` denotes that pattern `p`, or a set of patterns, is exhaustive with respect to type `t`. I have implemented the algorithm as described in [this Inria article](http://moscova.inria.fr/~maranget/papers/warn/index.html)
+`p exhausts t` denotes that pattern `p`, or a set of patterns, is exhaustive with respect to type `t`. I have implemented the algorithm as described in [this Inria article](http://moscova.inria.fr/~maranget/papers/warn/index.html).
+
+# Dynamic Semantics
+
+This language has eager/strict evaluation to simplify pattern-matching semantics.
+
+Let `e[v/p]` denote the substitution of sub-values of `v` for variables embedded in pattern `p` in expression `e`.
+
+```
+------------------------------
+ (fun p : t => e) v -> e[v/p]
+
+                   e2 -> e2'
+-----------------------------------------------
+ (fun p : t => e1) e2 -> (fun p : t => e1) e2'
+
+    e1 -> e1
+-----------------
+ e1 e2 -> e1' e2
+
+--------------------------
+ let p = v in e -> e[v/p]
+
+               e1 -> e1'
+---------------------------------------
+ let p = e1 in e2 -> let p = e1' in e2
+
+    e -> e'
+---------------
+ v, e -> v, e'
+
+     e1 -> e1'
+-------------------
+ e1, e2 -> e1, e2'
+
+--------------------
+ fst (v1, v2) -> v1
+
+      e -> e'
+ -----------------
+  fst e -> fst e'
+
+--------------------
+  snd (v1, v2) -> v1
+
+     e -> e'
+-----------------
+ snd e -> snd e'
+
+          e -> e'
+---------------------------
+ Left a b e -> Left a b e'
+
+           e -> e'
+-----------------------------
+ Right a b e -> Right a b e'
+
+          pi filters v
+-----------------------------------
+ match v with pi => ei -> ei[v/pi]
+
+                     e -> e'
+-------------------------------------------------
+ match e with pi => ei -> match e' with pi => ei
+```
+`pi filters v` is [defined within this paper](http://moscova.inria.fr/~maranget/papers/warn/warn003.html).
 
 # Idiosyncrasies
 
