@@ -204,3 +204,8 @@ p1 => e1
 | pn => en
 end
 ```
+
+# Known Issues
+
+### Parsing Precedence
+The parser does not correctly handle expression nesting on occaision. Until I fix this, for now wrapping sub-expressions in parantheses when bizarre type-checking issues arise seems to work.
