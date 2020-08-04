@@ -1,5 +1,5 @@
-fun x : unit =>
+fun x : unit + unit =>
 match x with
-| Left unit + unit _ => ()
-| Right unit + unit (_,_) => ()
+Left unit + unit x  => x
+| Right unit + unit x => x
 end

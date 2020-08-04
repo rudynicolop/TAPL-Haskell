@@ -8,6 +8,7 @@ import           AST
 import qualified Control.Monad        as CM
 import qualified Control.Monad.Except as ERR
 import qualified Data.Map.Strict      as M
+import qualified Data.Set             as S
 
 type Gamma = M.Map Id Type
 
@@ -115,12 +116,12 @@ check g match@(EMatch e cases) = do
           typeResult <- CM.foldM typeEqual Nothing ts'
           case typeResult of
             Nothing -> do
-              ERR.throwError $ "Match-expression " ++
+              ERR.throwError $ "Match-expression\n" ++
                 (show match) ++ " has no cases"
             (Just t') -> do
               let ps'' = map (\p' -> T t p') ps' in
                 return $ R t' (EMatch (T t e') $ zip ps'' es')
-      else ERR.throwError $ "Match-expression " ++
+      else ERR.throwError $ "Match-expression\n" ++
         (show match) ++ " has inexhaustive patterns"
   where
     foldHelper :: (Annotation t, Show (t (Pat t))) => RF -> t (Pat t) -> FoldResult
@@ -136,7 +137,7 @@ check g match@(EMatch e cases) = do
     typeEqual (Just t') t
       | t' == t = return $ Just t
       | otherwise = ERR.throwError $
-        "Case-expressions in match-expression " ++ (show match) ++
+        "Case-expressions in match-expression\n" ++ (show match) ++
           " have different types " ++ (show t) ++ " and " ++ (show t')
 
 checkPattern :: (Annotation t, Show (t (Pat t))) =>
@@ -149,7 +150,7 @@ checkPattern g TUnit PUnit = return $ RP g PUnit
 checkPattern g (TPair a b) pat@(PPair p1 p2) = do
   RP g1 p1' <- checkPattern g a $ gp p1
   RP g2 p2' <- checkPattern g b $ gp p2
-  if M.disjoint g1 g2
+  if S.disjoint (fv p1') (fv p2')
     then return $ RP (M.union g1 g2) (PPair (T a p1') (T b p2'))
     else ERR.throwError $ "In pattern " ++ (show pat) ++
       ", sub-patterns " ++ (show p1') ++ " and " ++ (show p2') ++
@@ -179,10 +180,21 @@ checkPattern _ t p = do
   ERR.throwError $ "Pattern " ++ (show p) ++
     " does not fit with expected type " ++ (show t)
 
+-- pattern free variables
+fv :: TPattern -> S.Set Id
+fv (PBase (T _ Nothing))     = S.empty
+fv (PBase (T _ (Just x)))    = S.singleton x
+fv PUnit                     = S.empty
+fv (PPair (T _ p1) (T _ p2)) = S.union (fv p1) (fv p2)
+fv (PLeft _ _ (T _ p))       = fv p
+fv (PRight _ _ (T _ p))      = fv p
+fv (POr (T _ p1) (T _ p2))   = S.intersection (fv p1) (fv p2)
+
 -- exhaustive patterns
 exhaustive :: Type -> [TPattern] -> Either String Bool
-exhaustive t ps =
-  urec (map (\p -> [patToWpat p]) ps) [PBase (T t ())]
+exhaustive t ps = do
+  result <- urec (map (\p -> [patToWpat p]) ps) [PBase (T t ())]
+  return $ not result
 
 type WPat = Pattern () T
 
@@ -245,7 +257,11 @@ urec pmat (POr (T _ p1) (T _ p2) : qs) = do
 
 -- Complete Signature Sigma
 sigma :: Type -> [WPat] -> Bool
-sigma TUnit ps = any ((==) PUnit) ps
+sigma TUnit ps = any unitCom ps
+  where
+    unitCom :: WPat -> Bool
+    unitCom PUnit = True
+    unitCom _     = False
 sigma (TFun _ _) _ = False
 sigma (TPair a b) ps = any pairCom ps
   where

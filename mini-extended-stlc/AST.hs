@@ -107,7 +107,7 @@ instance (Annotation t, Show (t (Pat t)), Show (t (Expr t))) => Show (Expr t) wh
   show EUnit = "()"
   show (EFun p t e) = "(fun " ++ (show p) ++ " : " ++ (show t) ++ " => " ++ (show e) ++ ")"
   show (EApp e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
-  show (ELet p e1 e2) = "(let " ++ (show p) ++ " = " ++ (show e1) ++ " in" ++ (show e2) ++ ")"
+  show (ELet p e1 e2) = "(let " ++ (show p) ++ " = " ++ (show e1) ++ " in " ++ (show e2) ++ ")"
   show (EPair e1 e2) = "(" ++ (show e1) ++ ", " ++ (show e2) ++ ")"
   show (EFst e) = "(fst " ++ (show e) ++ ")"
   show (ESnd e) = "(snd " ++ (show e) ++ ")"

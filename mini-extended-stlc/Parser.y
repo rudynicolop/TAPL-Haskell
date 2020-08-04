@@ -66,12 +66,13 @@ Expr : '()' {EUnit}
   | '(' Expr ')' {$2}
 
 matchSeq : matchCase end {[$1]}
-  | matchCase matchSeq {$1 : $2}
+  | matchCase '|' matchSeq {$1 : $3}
 
-matchCase : '|' Pattern '=>' Expr {(B $2, B $4)}
+matchCase : Pattern '=>' Expr {(B $1, B $3)}
 
 Pattern : '_' {PBase (B Nothing)}
   | var {PBase (B (Just $1))}
+  | '()' {PUnit}
   | Pattern ',' Pattern {PPair (B $1) (B $3)}
   | Left Type '+' Type Pattern {PLeft $2 $4 (B $5)}
   | Right Type '+' Type Pattern {PRight $2 $4 (B $5)}
