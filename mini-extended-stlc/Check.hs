@@ -174,7 +174,7 @@ checkPattern g t pat@(POr p1 p2) = do
   RP g2 p2' <- checkPattern g t $ gp p2
   if g1 == g2 then return $ RP g1 (POr (T t p1') (T t p2'))
     else ERR.throwError $ "In Pattern " ++ (show pat) ++
-      ", sub-patterns" ++ (show p1') ++ " and " ++ (show p2') ++
+      ", sub-patterns " ++ (show p1') ++ " and " ++ (show p2') ++
         " are expected to have the same set of variables, but do not"
 checkPattern _ t p = do
   ERR.throwError $ "Pattern " ++ (show p) ++

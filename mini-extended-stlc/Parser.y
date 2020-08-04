@@ -60,8 +60,8 @@ Expr : '()' {EUnit}
   | Expr ',' Expr {EPair (B $1) (B $3)}
   | fst Expr {EFst (B $2)}
   | snd Expr {ESnd (B $2)}
-  | Left Type '+' Type Expr {ELeft $2 $4 (B $5)}
-  | Right Type '+' Type Expr {ERight $2 $4 (B $5)}
+  | Left Type Type Expr {ELeft $2 $3 (B $4)}
+  | Right Type Type Expr {ERight $2 $3 (B $4)}
   | match Expr with matchSeq {EMatch (B $2) $4}
   | '(' Expr ')' {$2}
 
@@ -74,8 +74,8 @@ Pattern : '_' {PBase (B Nothing)}
   | var {PBase (B (Just $1))}
   | '()' {PUnit}
   | Pattern ',' Pattern {PPair (B $1) (B $3)}
-  | Left Type '+' Type Pattern {PLeft $2 $4 (B $5)}
-  | Right Type '+' Type Pattern {PRight $2 $4 (B $5)}
+  | Left Type Type Pattern {PLeft $2 $3 (B $4)}
+  | Right Type Type Pattern {PRight $2 $3 (B $4)}
   | Pattern '||' Pattern {POr (B $1) (B $3)}
   | '(' Pattern ')' {$2}
 

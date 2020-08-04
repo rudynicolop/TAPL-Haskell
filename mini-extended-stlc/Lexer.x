@@ -13,7 +13,7 @@ $alpha = [a-zA-Z] -- alphabetic characters
 
 tokens :-
 $white+ ;
-"unit" {\_ -> TUNIT}
+"u" {\_ -> TUNIT}
 "->" {\_ -> ARROW}
 "*" {\_ -> PROD}
 "+" {\_ -> SUM}
@@ -50,7 +50,7 @@ data Token =
   | COMMA -- comma in pair
   | LEFT -- either left
   | RIGHT -- either right
-  | POR -- or pattern delimeter
+  | POR -- or pattern delimiter
   | FUN -- fun keyword
   | COLON -- has type colon
   | MAPSTO -- => token
@@ -61,7 +61,7 @@ data Token =
   | SND -- snd
   | MATCH -- match
   | WITH -- with
-  | MID -- match-cases delimeter
+  | MID -- match-cases delimiter
   | END -- end of pattern match
   | EOF
   | LPAREN
