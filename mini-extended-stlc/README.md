@@ -143,7 +143,7 @@ Let `e[v/p]` denote the substitution of sub-values of `v` for variables embedded
   fst e -> fst e'
 
 --------------------
-  snd (v1, v2) -> v1
+  snd (v1, v2) -> v2
 
      e -> e'
 -----------------
