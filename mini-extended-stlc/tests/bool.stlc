@@ -1,24 +1,31 @@
+let f = Left u u () in
+let t = Right u u () in
+
+let not =
+  fun x : (u + u) =>
+  match x with
+  Left u u _ => t
+  | Right u u _ => f
+  end in
+
 let and =
   fun x : (u + u) =>
   fun y : (u + u) =>
   match x,y with
-  Left u u (), Left u u () => Left u u ()
-  | Left u u (), Right u u () => Left u u ()
-  | Right u u (), Left u u () => Left u u ()
-  | Right u u (), Right u u () => Right u u ()
+  Left u u (), Left u u () => f
+  | Left u u (), Right u u () => f
+  | Right u u (), Left u u () => f
+  | Right u u (), Right u u () => t
   end in
 
 let or =
   fun x : (u + u) =>
   fun y : (u + u) =>
   match x,y with
-  Left u u (), Left u u () => Left u u ()
-  | Left u u (), Right u u () => Right u u ()
-  | Right u u (), Left u u () => Right u u ()
-  | Right u u (), Right u u () => Right u u ()
+  Left u u (), Left u u () => f
+  | Left u u (), Right u u () => t
+  | Right u u (), Left u u () => t
+  | Right u u (), Right u u () => t
   end in
 
-let f = Left u u () in
-let t = Right u u () in
-
-and t t , or t t
+(or (not f) f)

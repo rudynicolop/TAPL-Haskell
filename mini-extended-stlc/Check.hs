@@ -100,7 +100,7 @@ check g left@(ELeft a b e) = do
 check g right@(ERight a b e) = do
   R b' e' <- check g $ ge e
   if b' == b
-    then return $ R (TEither a b) (ELeft a b (T b e'))
+    then return $ R (TEither a b) (ERight a b (T b e'))
     else ERR.throwError $ "In expression " ++ (show right) ++
       ", sub-expression " ++ (show e') ++ " is expected to have type " ++
       (show b) ++ ", but has type " ++ (show b')
@@ -120,7 +120,7 @@ check g match@(EMatch e cases) = do
                 (show match) ++ " has no cases"
             (Just t') -> do
               let ps'' = map (\p' -> T t p') ps' in
-                return $ R t' (EMatch (T t e') $ zip (reverse ps'') (reverse es'))
+                return $ R t' (EMatch (T t e') $ zip (reverse ps'') es')
       else ERR.throwError $ "Match-expression\n" ++
         (show match) ++ " has inexhaustive patterns"
   where
@@ -138,7 +138,7 @@ check g match@(EMatch e cases) = do
       | t' == t = return $ Just t
       | otherwise = ERR.throwError $
         "Case-expressions in match-expression\n" ++ (show match) ++
-          " have different types " ++ (show t) ++ " and " ++ (show t')
+          "\nhave different types " ++ (show t) ++ " and " ++ (show t')
 
 checkPattern :: (Annotation t, Show (t (Pat t))) =>
   Gamma -> Type -> Pat t -> ResultP

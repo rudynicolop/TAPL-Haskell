@@ -1,0 +1,4 @@
+match (Right u u ()) with
+Left u u _ => Right u u ()
+| Right u u _ => Left u u ()
+end

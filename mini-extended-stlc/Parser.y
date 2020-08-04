@@ -36,16 +36,16 @@ end {L.END}
 var {L.VAR $$}
 
 %nonassoc '(' ')'
+%nonassoc var
 %nonassoc '=>'
 %nonassoc fun ':'
 %left '+' '*' '||'
 %nonassoc unit
-%nonassoc let '=' in
-%nonassoc match with '|' end
-%nonassoc ','
+%nonassoc let '=' in LETEXPR
+%nonassoc match with '|' end MATCHEXPR
+%nonassoc ',' PAIR
 %nonassoc fst snd
 %nonassoc Left Right
-%nonassoc var
 %left APP
 %right '->'
 %nonassoc '()'
@@ -56,13 +56,13 @@ Expr : '()' {EUnit}
   | var {EName (B $1)}
   | fun Pattern ':' Type '=>' Expr {EFun (B $2) $4 (B $6)}
   | Expr Expr %prec APP {EApp (B $1) (B $2)}
-  | let Pattern '=' Expr in Expr {ELet (B $2) (B $4) (B $6)}
-  | Expr ',' Expr {EPair (B $1) (B $3)}
+  | let Pattern '=' Expr in Expr %prec LETEXPR {ELet (B $2) (B $4) (B $6)}
+  | Expr ',' Expr %prec PAIR {EPair (B $1) (B $3)}
   | fst Expr {EFst (B $2)}
   | snd Expr {ESnd (B $2)}
   | Left Type Type Expr {ELeft $2 $3 (B $4)}
   | Right Type Type Expr {ERight $2 $3 (B $4)}
-  | match Expr with matchSeq {EMatch (B $2) $4}
+  | match Expr with matchSeq %prec MATCHEXPR {EMatch (B $2) $4}
   | '(' Expr ')' {$2}
 
 matchSeq : matchCase end {[$1]}

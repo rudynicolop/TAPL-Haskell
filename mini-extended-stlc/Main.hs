@@ -22,6 +22,7 @@ main = do
         (Left tmsg)          -> do putStrLn $ "Type-Error: " ++ tmsg
         (Right (C.R t tast)) -> do
           putStrLn "Successfully Type-checks! :D"
+          putStrLn $ show tast
           putStrLn $ "Program type: " ++ show t
           case E.eval M.empty tast of
             (Left emsg) -> do putStrLn $ "Evaluation-Error: " ++ emsg
