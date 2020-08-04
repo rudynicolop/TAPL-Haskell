@@ -5,6 +5,8 @@
 
 module AST where
 
+import qualified Data.Map.Strict as M
+
 type Id = String
 
 data Type =
@@ -51,9 +53,11 @@ data Expr t =
 instance Eq (t (Expr t)) => Eq (Expr t) where
     (==) = (==)
 
+type Bindings t = M.Map Id (t (Value t))
+
 data Value t =
   VUnit
-  | VFun (t (Pat t)) Type (t (Expr t))
+  | VClosure  (Bindings t) (t (Pat t)) Type (t (Expr t))
   | VPair (t (Value t)) (t (Value t))
   | VLeft Type Type (t (Value t))
   | VRight Type Type (t (Value t))
@@ -82,6 +86,8 @@ type BExpr = Expr B
 type TPattern = Pat T
 
 type TExpr = Expr T
+
+type TBinds = Bindings T
 
 type TValue = Value T
 
@@ -134,7 +140,7 @@ instance (Annotation t, Show (t (Pat t)), Show (t (Expr t))) => Show (Expr t) wh
 
 instance (Annotation t, Show (t (Pat t)), Show (t (Expr t)), Show (t (Value t))) => Show (Value t) where
   show VUnit = "()"
-  show (VFun p t e) = "(fun " ++ (show p) ++ " : " ++ (show t) ++ " => " ++ (show e) ++ ")"
+  show (VClosure _ p t e) = "(fun " ++ (show p) ++ " : " ++ (show t) ++ " => " ++ (show e) ++ ")"
   show (VPair v1 v2) = "(" ++ (show v1) ++ ", " ++ (show v2) ++ ")"
   show (VLeft a b v) = "(Left " ++ (show a) ++ " " ++ (show b) ++ " " ++ (show v) ++ ")"
   show (VRight a b v) = "(Right " ++ (show a) ++ " " ++ (show b) ++ " " ++ (show v) ++ ")"
