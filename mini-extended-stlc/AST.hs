@@ -51,6 +51,16 @@ data Expr t =
 instance Eq (t (Expr t)) => Eq (Expr t) where
     (==) = (==)
 
+data Value t =
+  VUnit
+  | VFun (t (Pat t)) Type (t (Expr t))
+  | VPair (t (Value t)) (t (Value t))
+  | VLeft Type Type (t (Value t))
+  | VRight Type Type (t (Value t))
+
+instance Eq (t (Value t)) => Eq (Value t) where
+    (==) = (==)
+
 -- bare/blank annotation
 data B e = B e
   deriving (Eq)
@@ -73,22 +83,27 @@ type TPattern = Pat T
 
 type TExpr = Expr T
 
+type TValue = Value T
+
 class Annotation t where
   gx :: t (Id) -> Id
   gp :: t (Pat t) -> Pat t
   ge :: t (Expr t) -> Expr t
+  gv :: t (Value t) -> Value t
   gopt :: t PName -> PName
 
 instance Annotation B where
   gx (B x) = x
   gp (B p) = p
   ge (B e) = e
+  gv (B v) = v
   gopt (B o) = o
 
 instance Annotation T where
   gx (T _ x) = x
   gp (T _ p) = p
   ge (T _ e) = e
+  gv (T _ v) = v
   gopt (T _ o) = o
 
 instance (Annotation t, Show (t (Pat t))) => Show (Pat t) where
@@ -116,3 +131,10 @@ instance (Annotation t, Show (t (Pat t)), Show (t (Expr t))) => Show (Expr t) wh
   show (EMatch e cases) =
     (foldl (\ acc (p',e') -> acc ++ "\n| " ++ (show p') ++ " => " ++ (show e'))
       ("match " ++ (show e) ++ " with ") cases) ++ "\nend"
+
+instance (Annotation t, Show (t (Pat t)), Show (t (Expr t)), Show (t (Value t))) => Show (Value t) where
+  show VUnit = "()"
+  show (VFun p t e) = "(fun " ++ (show p) ++ " : " ++ (show t) ++ " => " ++ (show e) ++ ")"
+  show (VPair v1 v2) = "(" ++ (show v1) ++ ", " ++ (show v2) ++ ")"
+  show (VLeft a b v) = "(Left " ++ (show a) ++ " " ++ (show b) ++ " " ++ (show v) ++ ")"
+  show (VRight a b v) = "(Right " ++ (show a) ++ " " ++ (show b) ++ " " ++ (show v) ++ ")"
