@@ -26,8 +26,6 @@ fv (EMatch (T _ e) cases) = foldl fvCase (fv e) cases
     fvCase :: S.Set Id -> (T TPattern, T TExpr) -> S.Set Id
     fvCase acc (T _ p', T _ e') = S.union acc $ S.difference (fv e') (C.fv p')
 
-
-
 -- binds sub-values to variables in a pattern if it is an instance
 instanceBind :: TPattern -> TValue -> TBinds -> Maybe TBinds
 instanceBind (PBase (T _ Nothing)) _ b = Just b

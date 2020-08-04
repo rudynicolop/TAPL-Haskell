@@ -38,14 +38,14 @@ var {L.VAR $$}
 %nonassoc '(' ')'
 %nonassoc '=>'
 %nonassoc fun ':'
-%nonassoc var
 %left '+' '*' '||'
 %nonassoc unit
 %nonassoc let '=' in
 %nonassoc match with '|' end
-%left ','
+%nonassoc ','
 %nonassoc fst snd
 %nonassoc Left Right
+%nonassoc var
 %left APP
 %right '->'
 %nonassoc '()'

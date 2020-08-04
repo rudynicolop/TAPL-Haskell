@@ -1,0 +1,24 @@
+let and =
+  fun x : (u + u) =>
+  fun y : (u + u) =>
+  match x,y with
+  Left u u (), Left u u () => Left u u ()
+  | Left u u (), Right u u () => Left u u ()
+  | Right u u (), Left u u () => Left u u ()
+  | Right u u (), Right u u () => Right u u ()
+  end in
+
+let or =
+  fun x : (u + u) =>
+  fun y : (u + u) =>
+  match x,y with
+  Left u u (), Left u u () => Left u u ()
+  | Left u u (), Right u u () => Right u u ()
+  | Right u u (), Left u u () => Right u u ()
+  | Right u u (), Right u u () => Right u u ()
+  end in
+
+let f = Left u u () in
+let t = Right u u () in
+
+and t t , or t t

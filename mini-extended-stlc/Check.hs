@@ -120,7 +120,7 @@ check g match@(EMatch e cases) = do
                 (show match) ++ " has no cases"
             (Just t') -> do
               let ps'' = map (\p' -> T t p') ps' in
-                return $ R t' (EMatch (T t e') $ zip ps'' es')
+                return $ R t' (EMatch (T t e') $ zip (reverse ps'') (reverse es'))
       else ERR.throwError $ "Match-expression\n" ++
         (show match) ++ " has inexhaustive patterns"
   where
