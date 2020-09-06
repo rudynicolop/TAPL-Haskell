@@ -8,7 +8,7 @@ Let the metavariables `x,y,z` range over expression variables, `e` range over ex
 t ::= unit | u -> v | X | mu X. t
 
 e ::= () | x | fn x : t => e | e1 e2
-  | fold [mu X. t] e | unfold [mu X. t ] e
+  | fold [t] e | unfold [t] e
 ```
 
 ### Static Semantics
@@ -26,36 +26,36 @@ e ::= () | x | fn x : t => e | e1 e2
  G |- fn x : t => e : u -> v
 
  G |- e1 : u -> v   G |- e2 : u
---------------------------------{T-App}
+--------------------------------[T-App]
           G |- e1 e2 : v
 
        G |- e : t{mu X. t/X}
----------------------------------{T-Fold}
+---------------------------------[T-Fold]
  G |- fold [mu X. t] e : mu X. t
 
              G |- e : mu X. t
-----------------------------------------{T-Unfold}
+----------------------------------------[T-Unfold]
  G |- unfold [mu X. t] e : t{mu X. t/X}
 ```
 
 ### Dynamic Semantics
 
 ```
-----------------------------------{E-Redux}
- (fun x : t => e1) e2 -> e1[e2/x]
+---------------------------------[E-Redux]
+ (fn x : t => e1) e2 -> e1[e2/x]
 
     e1 -> e1'
------------------{E-App}
+-----------------[E-App]
  e1 e2 -> e1' e2
 
-------------------------------------------{E-Annihilate}
+------------------------------------------[E-Annihilate]
  unfold [mu X. t] (fold [mu X. t] e) -> e
 
                 e -> e'
----------------------------------------{E-Fold}
+---------------------------------------[E-Fold]
  fold [mu X. t] e -> fold [mu X. t] e'
 
                   e -> e'
--------------------------------------------{E-Unfold}
+-------------------------------------------[E-Unfold]
  unfold [mu X. t] e -> unfold [mu X. t] e'
 ```

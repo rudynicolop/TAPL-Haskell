@@ -17,46 +17,60 @@ instance Show Type where
   show (TVar x)   = x
   show (TRec x t) = "(μ " ++ x ++ ". " ++ (show t) ++ ")"
 
-data Expr k =
+data Expr k r =
   EUnit
   | EVar (k Id)
-  | EFun Id Type (k (Expr k))
-  | EApp (k (Expr k)) (k (Expr k))
-  | EFold Id Type (k (Expr k))
-  | EUnfold Id Type (k (Expr k))
+  | EFun Id Type (k (Expr k r))
+  | EApp (k (Expr k r)) (k (Expr k r))
+  | EFold r (k (Expr k r))
+  | EUnfold r (k (Expr k r))
 
-instance Eq (t (Expr t)) => Eq (Expr t) where
+instance Eq (t (Expr t r)) => Eq (Expr t r) where
     (==) = (==)
 
--- bare/blank annotation
-data B e = B e
+-- untyped fold/unfold type
+data UR = UR Type
   deriving (Eq)
 
-instance Show e => Show (B e) where
-  show (B e) = show e
+-- typed fold/unfold type
+data TR = TR Id Type
+  deriving (Eq)
+
+instance Show UR where
+  show (UR t) = show t
+
+instance Show TR where
+  show (TR x t) = show (TRec x t)
+
+-- untyped annotation
+data UA e = UA e
+  deriving (Eq)
+
+instance Show e => Show (UA e) where
+  show (UA e) = show e
 
 -- type annotation
-data T e = T Type e
+data TA e = TA Type e
   deriving (Eq)
 
-instance Show e => Show (T e) where
-  show (T _ e) = show e
+instance Show e => Show (TA e) where
+  show (TA _ e) = show e
 
 class Annotation t where
-  ge :: t (Expr t) -> Expr t
+  ge :: t (Expr t r) -> Expr t r
   gx :: t (Id) -> Id
 
-instance Annotation B where
-  ge (B e) = e
-  gx (B x) = x
+instance Annotation UA where
+  ge (UA e) = e
+  gx (UA x) = x
 
-instance Annotation T where
-  ge (T _ e) = e
-  gx (T _ x) = x
+instance Annotation TA where
+  ge (TA _ e) = e
+  gx (TA _ x) = x
 
-instance (Annotation t, Show (t (Expr t))) => Show (Expr t) where
+instance (Annotation t, Show r, Show (t (Expr t r))) => Show (Expr t r) where
   show EUnit = "()"
   show (EVar x) = gx x
   show (EFun x t e) = "(fun " ++ x ++ ": " ++ (show t) ++ ". " ++ (show e) ++ ")"
   show (EApp e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
-  show (EFold x t e) = "(fold [" ++ (show $ TRec x t) ++ "] " ++ (show e) ++ ")"
+  show (EFold t e) = "(fold [" ++ (show t) ++ "] " ++ (show e) ++ ")"
