@@ -38,5 +38,31 @@ check g eapp@(EApp e1 e2) = do
     checkapp (TA t1 e1') e2' = ERR.throwError $
       "In application " ++ (show eapp) ++
         ", expression " ++ (show e1') ++ " has type " ++ (show t1)
-check g efold@(EFold t e) = ERR.throwError "incomplete"
-check _ _     = ERR.throwError "unimplemented"
+check g eunfold@(EUnfold t e) =
+  case gt t of
+    TRec a r -> do
+      TA t' e' <- check g $ ge e
+      if alphaEq t' (TRec a r)
+        then return $ TA (unfold a r) $ EUnfold (TR a r) (TA t' e')
+        else ERR.throwError $ "In unfold-expression " ++ (show eunfold) ++
+          ", sub-expression " ++ (show e') ++ " is expected to have type " ++
+            (show t) ++ ", but has type " ++ (show t')
+    wt -> ERR.throwError $ "In unfold-expression " ++ (show eunfold) ++
+        ", type argument " ++ (show wt) ++ " should be a recursive type"
+check g efold@(EFold t e) = ERR.throwError "unimplemented"
+
+-- type variable capture-avoiding substitution
+-- invariant: type passed in is a recursive type
+-- unfold X t= t{mu X. t/X}
+unfold :: Id -> Type -> Type
+unfold _ TUnit = TUnit
+unfold x (TFun t1 t2) = TFun (unfold x t1) (unfold x t2)
+unfold x (TVar y)
+  -- weird but makes sense...I guess...?
+  | y == x = TRec x (TVar x)
+  | otherwise = TVar y
+unfold x (TRec a r)
+  -- strange case...
+  | a == x = TRec a r
+  -- also strange
+  | otherwise = TRec a $ unfold x r

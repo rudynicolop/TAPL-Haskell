@@ -89,3 +89,27 @@ instance (Annotation t, RecursiveType r, Show (t (Expr t r))) => Show (Expr t r)
   show (EApp e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
   show (EFold t e) = "(fold [" ++ (show t) ++ "] " ++ (show e) ++ ")"
   show (EUnfold t e) = "(unfold [" ++ (show t) ++ "] " ++ (show e) ++ ")"
+
+class AlphaEq t where
+  alphaEq :: t -> t -> Bool
+  -- subvar x y t substitues type variable y for x in t
+  subvar :: Id -> Id -> t -> t
+
+instance AlphaEq Type where
+  alphaEq TUnit TUnit               = True
+  alphaEq (TFun a1 b1) (TFun a2 b2) = alphaEq a1 a2 && alphaEq b1 b2
+  alphaEq (TVar x1) (TVar x2)       = x1 == x2
+  alphaEq (TRec a1 r1) (TRec a2 r2) = alphaEq r2 $ subvar a1 a2 r1
+  alphaEq _ _                       = False
+
+  subvar a1 a2 t = subvar' t
+    where
+      subvar' :: Type -> Type
+      subvar' TUnit = TUnit
+      subvar' (TFun t1 t2) = TFun (subvar' t1) (subvar' t2)
+      subvar' (TVar x)
+        | x == a1 = TVar a2
+        | otherwise = TVar x
+      subvar' (TRec a r)
+        | a == a1 = TRec a r
+        | otherwise = TRec a $ subvar' r
