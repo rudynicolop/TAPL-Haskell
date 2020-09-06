@@ -30,7 +30,7 @@ check g eapp@(EApp e1 e2) = do
   where
     checkapp :: TA TExpr -> TA TExpr -> Result
     checkapp (TA (TFun t11 t12) e1') (TA t2 e2')
-      | t11 == t2 = return $ TA t12 $ EApp (TA (TFun t11 t12) e1') (TA t12 e2')
+      | alphaEq t11 t2 = return $ TA t12 $ EApp (TA (TFun t11 t12) e1') (TA t12 e2')
       | otherwise = ERR.throwError $
         "In application " ++ (show eapp) ++ ", argument " ++ (show e2') ++
           " is expected to have type " ++ (show t11) ++
@@ -64,16 +64,18 @@ check g efold@(EFold t e) =
 
 -- type variable capture-avoiding substitution
 -- invariant: type passed in is a recursive type
--- unfold X t= t{mu X. t/X}
+-- unfold X t = {mu X. t/X}
 unfold :: Id -> Type -> Type
-unfold _ TUnit = TUnit
-unfold x (TFun t1 t2) = TFun (unfold x t1) (unfold x t2)
-unfold x (TVar y)
-  -- weird but makes sense...I guess...?
-  | y == x = TRec x (TVar x)
-  | otherwise = TVar y
-unfold x (TRec a r)
-  -- strange case...
-  | a == x = TRec a r
-  -- also strange
-  | otherwise = TRec a $ unfold x r
+unfold x t = unfold' t
+  where
+    unfold' :: Type -> Type
+    unfold' TUnit        = TUnit
+    unfold' (TFun t1 t2) = TFun (unfold' t1) (unfold' t2)
+    unfold' (TVar y)
+      | y == x = TRec x t
+      | otherwise = TVar y
+    unfold' (TRec a r)
+      -- strange case...
+      | a == x = TRec a r
+      -- also strange
+      | otherwise = TRec a $ unfold' r

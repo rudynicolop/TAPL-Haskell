@@ -1,1 +1,2 @@
-fn f : mu X. X -> X => fn a : mu X. X -> X => f a
+fn f : mu X. X -> X => fn a : mu X. X -> X =>
+  (unfold [mu X. X -> X] f) a

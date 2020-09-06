@@ -3,6 +3,8 @@
 module Main where
 
 import qualified AST                as A
+import qualified Check              as C
+import qualified Data.Map.Strict    as M
 import qualified Lexer              as L
 import qualified Parser             as P
 import qualified System.Environment as OS
@@ -16,3 +18,9 @@ main = do
       let ast = P.parse $ L.alexLex pgm
       putStrLn $ "Parsed program as: "
       putStrLn $ show ast
+      case C.check M.empty ast of
+        Left tmsg         -> do putStrLn $ "Type-Error: " ++ tmsg
+        Right (A.TA t tast) -> do
+          putStrLn "Successfully Type-checks! :D"
+          putStrLn $ show tast
+          putStrLn $ "Program type: " ++ show t

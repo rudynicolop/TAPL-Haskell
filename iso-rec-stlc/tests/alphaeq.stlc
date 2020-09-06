@@ -1,0 +1,1 @@
+fold [mu Z. Z -> Z] (fn x : mu A. A -> A => (unfold [mu B. B -> B] x) x)

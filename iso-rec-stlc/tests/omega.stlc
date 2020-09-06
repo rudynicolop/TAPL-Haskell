@@ -1,0 +1,2 @@
+(fn x : mu A. A -> A => (unfold [mu A.A -> A] x) x)
+(fold [mu A. A -> A] (fn x : mu A. A -> A => (unfold [mu A.A -> A] x) x))
