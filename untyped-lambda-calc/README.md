@@ -14,18 +14,18 @@ The implementation evaluates expressions under a normal-order small-step semanti
 
 ```
     e -> e'
----------------
+---------------{E-Fun}
  \x.e -> \x.e'
 
-------------------------
+------------------------{E-Redux}
  (\x.e1) e2 -> e1[e2/x]
 
     e2 -> e2'
------------------
+-----------------{E-App-1}
   x e2 -> x e2'
 
     e1 -> e1'
------------------
+-----------------{E-App-2}
  e1 e2 -> e1' e2
 ```
 At long last a formalized semantics for normal-order evaluation, to supplement vague—"left-most outer-most full beta-reduction" explanations.
