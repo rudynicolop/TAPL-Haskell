@@ -41,15 +41,26 @@ check g eapp@(EApp e1 e2) = do
 check g eunfold@(EUnfold t e) =
   case gt t of
     TRec a r -> do
-      TA t' e' <- check g $ ge e
+      eprime@(TA t' e') <- check g $ ge e
       if alphaEq t' (TRec a r)
-        then return $ TA (unfold a r) $ EUnfold (TR a r) (TA t' e')
+        then return $ TA (unfold a r) $ EUnfold (TR a r) eprime
         else ERR.throwError $ "In unfold-expression " ++ (show eunfold) ++
           ", sub-expression " ++ (show e') ++ " is expected to have type " ++
             (show t) ++ ", but has type " ++ (show t')
     wt -> ERR.throwError $ "In unfold-expression " ++ (show eunfold) ++
         ", type argument " ++ (show wt) ++ " should be a recursive type"
-check g efold@(EFold t e) = ERR.throwError "unimplemented"
+check g efold@(EFold t e) =
+  case gt t of
+    trec@(TRec a r) -> do
+      eprime@(TA t' e') <- check g $ ge e
+      let uar = unfold a r in
+        if alphaEq t' uar
+          then return $ TA trec $ EFold (TR a r) eprime
+          else ERR.throwError $ "In fold-expression " ++ (show efold) ++
+            ", sub-expression " ++ (show e') ++ " is expected to have type " ++
+              (show uar) ++ ", but has type " ++ (show t')
+    wt -> ERR.throwError $ "In fold-expression " ++ (show efold) ++
+        ", type argument " ++ (show wt) ++ " should be a recursive type"
 
 -- type variable capture-avoiding substitution
 -- invariant: type passed in is a recursive type
