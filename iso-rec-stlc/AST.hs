@@ -43,6 +43,15 @@ instance Show UR where
 instance Show TR where
   show (TR x t) = show (TRec x t)
 
+class Show r => RecursiveType r where
+  gt :: r -> Type
+
+instance RecursiveType UR where
+  gt (UR t) = t
+
+instance RecursiveType TR where
+  gt (TR x t) = TRec x t
+
 -- untyped annotation
 data UA e = UA e
   deriving (Eq)
@@ -57,6 +66,10 @@ data TA e = TA Type e
 instance Show e => Show (TA e) where
   show (TA _ e) = show e
 
+type UExpr = Expr UA UR
+
+type TExpr = Expr TA TR
+
 class Annotation t where
   ge :: t (Expr t r) -> Expr t r
   gx :: t (Id) -> Id
@@ -69,7 +82,7 @@ instance Annotation TA where
   ge (TA _ e) = e
   gx (TA _ x) = x
 
-instance (Annotation t, Show r, Show (t (Expr t r))) => Show (Expr t r) where
+instance (Annotation t, RecursiveType r, Show (t (Expr t r))) => Show (Expr t r) where
   show EUnit = "()"
   show (EVar x) = gx x
   show (EFun x t e) = "(λ " ++ x ++ ": " ++ (show t) ++ ". " ++ (show e) ++ ")"
