@@ -1,4 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
 
 module AST where
 
@@ -71,6 +72,7 @@ instance Annotation TA where
 instance (Annotation t, Show r, Show (t (Expr t r))) => Show (Expr t r) where
   show EUnit = "()"
   show (EVar x) = gx x
-  show (EFun x t e) = "(fun " ++ x ++ ": " ++ (show t) ++ ". " ++ (show e) ++ ")"
+  show (EFun x t e) = "(λ " ++ x ++ ": " ++ (show t) ++ ". " ++ (show e) ++ ")"
   show (EApp e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
   show (EFold t e) = "(fold [" ++ (show t) ++ "] " ++ (show e) ++ ")"
+  show (EUnfold t e) = "(unfold [" ++ (show t) ++ "] " ++ (show e) ++ ")"

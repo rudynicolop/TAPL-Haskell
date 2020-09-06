@@ -1,0 +1,1 @@
+fn x : mu A.A -> unit => (unfold [mu A.A -> unit] x) x

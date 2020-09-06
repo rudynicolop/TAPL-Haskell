@@ -1,5 +1,13 @@
 # Iso-recursive Types Extending the Simply-Typed Lambda Calculus
 
+### Build and Run
+
+To run a `.stlc` program enter:
+
+```bash
+cabal new-run irecstlc -- tests/unit.stlc
+```
+
 ### Syntax
 
 Let the metavariables `x,y,z` range over expression variables, `e` range over expressions, `X,Y,Z` range over type variables, and `t,u,v` range over types.

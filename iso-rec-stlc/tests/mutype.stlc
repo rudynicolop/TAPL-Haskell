@@ -1,0 +1,1 @@
+fn f : mu X. X -> X => fn a : mu X. X -> X => f a

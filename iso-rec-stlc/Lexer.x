@@ -9,7 +9,8 @@ import qualified Data.Word as W
 import qualified Codec.Binary.UTF8.String as U
 }
 
-$alpha = [a-zA-Z] -- alphabetic characters
+$lilalpha = [a-z] -- reserved for expression variables
+$bigalpha = [A-Z] -- reserved for type variables
 
 tokens :-
 $white+ ;
@@ -17,6 +18,7 @@ $white+ ;
 "->" {\_ -> ARROW}
 "mu" {\_ -> MU}
 "." {\_ -> DOT}
+"()" {\_ -> UNIT}
 "fn" {\_ -> FUN}
 ":" {\_ -> COLON}
 "=>" {\_ -> MAPSTO}
@@ -26,7 +28,8 @@ $white+ ;
 "]" {\_ -> RBRACK}
 "(" {\_ -> LPAREN}
 ")" {\_ -> RPAREN}
-$alpha [$alpha \_ \’]* { \s -> VAR s }
+$lilalpha [$lilalpha \_ \’]* {\s -> VAR s}
+$bigalpha [$lilalpha \_ \’]* {\s -> TYPEVAR s}
 
 {
 data Token =
@@ -44,6 +47,7 @@ data Token =
   | RBRACK
   | LPAREN
   | RPAREN
+  | TYPEVAR String
   | VAR String
   | EOF
   deriving (Eq,Show)
