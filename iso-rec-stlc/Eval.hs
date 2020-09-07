@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
 
-module Eval where
+module Eval(stepStar) where
 
 import           AST
 import qualified Control.Monad.Trans.Class      as MT
@@ -62,3 +62,39 @@ sub x es et = sub' et
     sub' (EUnfold r (TA t e)) = do
       e' <- sub' e
       return $ EUnfold r $ TA t e'
+
+type FreshFix = FIX.FixT Fresh TExpr
+
+class (MT.MonadTrans mt) => AltMonadLift mt where
+  altLift :: Monad m => m a -> mt m a
+
+-- why is the default lift NoProgress?
+instance AltMonadLift FIX.FixT where
+ altLift m
+  = FIX.FixT
+  $ do  v <- m
+        return (v, FIX.RunAgain)
+
+-- The transformers-fix library is on opposite day...
+halt :: Monad m => a -> FIX.FixT m a
+halt a
+ = FIX.FixT $ return (a, FIX.NoProgress)
+
+-- lazy evaluation
+step :: TExpr -> FreshFix
+step (EApp (TA _ (EFun x _ (TA _ ebody))) (TA _ earg)) = altLift $ sub x earg ebody
+step (EApp (TA t efun) earg) = do
+  efun' <- step efun
+  FIX.progress $ EApp (TA t efun') earg
+step (EUnfold _ (TA _ (EFold _ (TA _ e)))) = FIX.progress e
+step (EFold r (TA t e)) = do
+  e' <- step e
+  FIX.progress $ EFold r $ TA t e
+step (EUnfold r (TA t e)) = do
+  e' <- step e
+  FIX.progress $ EUnfold r $ TA t e
+step e = halt e
+
+-- steps until stuck/fixpoint
+stepStar :: TExpr -> TExpr
+stepStar e = ST.evalState (FIX.fixpoint step e) 0

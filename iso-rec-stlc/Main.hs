@@ -5,6 +5,7 @@ module Main where
 import qualified AST                as A
 import qualified Check              as C
 import qualified Data.Map.Strict    as M
+import qualified Eval               as E
 import qualified Lexer              as L
 import qualified Parser             as P
 import qualified System.Environment as OS
@@ -24,3 +25,5 @@ main = do
           putStrLn "Successfully Type-checks! :D"
           putStrLn $ show tast
           putStrLn $ "Program type: " ++ show t
+          putStrLn "Program evaluates to:"
+          putStrLn $ show $ E.stepStar tast
