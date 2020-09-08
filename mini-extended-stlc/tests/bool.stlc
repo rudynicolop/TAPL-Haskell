@@ -28,4 +28,4 @@ let or =
   | Right u u (), Right u u () => t
   end in
 
-(or (not f) f)
+or (not f) f, and t (not f)

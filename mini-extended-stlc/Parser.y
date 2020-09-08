@@ -52,38 +52,82 @@ var {L.VAR $$}
 
 %%
 
-Expr : '()' {EUnit}
-  | var {EName (B $1)}
-  | fun Pattern ':' Type '=>' Expr {EFun (B $2) $4 (B $6)}
-  | Expr Expr %prec APP {EApp (B $1) (B $2)}
-  | let Pattern '=' Expr in Expr %prec LETEXPR {ELet (B $2) (B $4) (B $6)}
-  | Expr ',' Expr %prec PAIR {EPair (B $1) (B $3)}
-  | fst Expr {EFst (B $2)}
-  | snd Expr {ESnd (B $2)}
-  | Left Type Type Expr {ELeft $2 $3 (B $4)}
-  | Right Type Type Expr {ERight $2 $3 (B $4)}
-  | match Expr with matchSeq %prec MATCHEXPR {EMatch (B $2) $4}
-  | '(' Expr ')' {$2}
+expr :: {BExpr}
+expr : let pat '=' funexpr in expr {ELet (B $2) (B $4) (B $6)}
+     | funexpr {$1}
 
+funexpr :: {BExpr}
+funexpr : fun pat ':' typ '=>' funexpr {EFun (B $2) $4 (B $6)}
+      | matchexpr {$1}
+
+matchexpr :: {BExpr}
+matchexpr : match expr with matchSeq {EMatch (B $2) $4}
+      | pairexpr {$1}
+
+matchSeq :: {[(B BPattern, B BExpr)]}
 matchSeq : matchCase end {[$1]}
-  | matchCase '|' matchSeq {$1 : $3}
+         | matchCase '|' matchSeq {$1 : $3}
 
-matchCase : Pattern '=>' Expr {(B $1, B $3)}
+matchCase :: {(B BPattern, B BExpr)}
+matchCase : pat '=>' expr {(B $1, B $3)}
 
-Pattern : '_' {PBase (B Nothing)}
-  | var {PBase (B (Just $1))}
-  | '()' {PUnit}
-  | Pattern ',' Pattern {PPair (B $1) (B $3)}
-  | Left Type Type Pattern {PLeft $2 $3 (B $4)}
-  | Right Type Type Pattern {PRight $2 $3 (B $4)}
-  | Pattern '||' Pattern {POr (B $1) (B $3)}
-  | '(' Pattern ')' {$2}
+pairexpr :: {BExpr}
+pairexpr : appexpr ',' appexpr {EPair (B $1) (B $3)}
+         | appexpr  {$1}
 
-Type : unit {TUnit}
-  | Type '->' Type {TFun $1 $3}
-  | Type '*' Type {TPair $1 $3}
-  | Type '+' Type {TEither $1 $3}
-  | '(' Type ')' {$2}
+appexpr :: {BExpr}
+appexpr : appexpr projexpr {EApp (B $1) (B $2)}
+        | projexpr {$1}
+
+projexpr :: {BExpr}
+projexpr : fst projexpr {EFst (B $2)}
+         | snd projexpr {ESnd (B $2)}
+         | eitherexpr {$1}
+
+eitherexpr :: {BExpr}
+eitherexpr : Left typ typ eitherexpr {ELeft $2 $3 (B $4)}
+           | Right typ typ eitherexpr {ERight $2 $3 (B $4)}
+           | bottomexpr {$1}
+
+bottomexpr :: {BExpr}
+bottomexpr : '()' {EUnit}
+        | var {EName (B $1)}
+        | '(' expr ')' {$2}
+
+pat :: {BPattern}
+pat : pat '||' pat {POr (B $1) (B $3)}
+pat : pairpat {$1}
+
+pairpat :: {BPattern}
+pairpat : eitherpat ',' eitherpat {PPair (B $1) (B $3)}
+        | eitherpat {$1}
+
+eitherpat :: {BPattern}
+eitherpat : Left typ typ bottompat {PLeft $2 $3 (B $4)}
+         | Right typ typ bottompat {PRight $2 $3 (B $4)}
+          | bottompat {$1}
+
+bottompat :: {BPattern}
+bottompat : '_' {PBase (B Nothing)}
+           | var {PBase (B (Just $1))}
+           | '()' {PUnit}
+           | '(' pat ')' {$2}
+
+typ :: {Type}
+typ : eithertyp '->' typ {TFun $1 $3}
+    | eithertyp {$1}
+
+eithertyp :: {Type}
+eithertyp : pairtyp '+' pairtyp {TEither $1 $3}
+          | pairtyp {$1}
+
+pairtyp :: {Type}
+pairtyp : bottomtyp '*' bottomtyp {TPair $1 $3}
+        | bottomtyp {$1}
+
+bottomtyp :: {Type}
+bottomtyp : unit {TUnit}
+          | '(' typ ')' {$2}
 
 {
 parseError :: [L.Token] -> a

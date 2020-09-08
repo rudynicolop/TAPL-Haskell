@@ -1,7 +1,7 @@
 
 let _ =
-  (match (Right u u ()) with
+  match (Right u u ()) with
   Left u u _ || Right u u _ => Left u u ()
-  end) in
+  end in
 
-let (Left (u + u) u x,y) = (Left (u + u) u (Left u u ()), Right u u ()) in x
+let Left (u + u) u x,y = Left (u + u) u (Left u u ()), Right u u () in x
