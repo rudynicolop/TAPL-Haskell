@@ -92,31 +92,35 @@ instance MIO.MonadIO (FIX.FixT Fresh) where
   liftIO a = FIX.FixT
     $ do
       v <- MIO.liftIO a
-      return (v, FIX.RunAgain)
+      return (v, FIX.NoProgress)
 
-printProgress :: TExpr -> FreshFix
-printProgress e = do
-  MIO.liftIO $ putStrLn " -> "
+printFreshFix :: TExpr -> FreshFix
+printFreshFix e = do
   MIO.liftIO $ putStrLn $ show e
-  FIX.progress e
+  MIO.liftIO $ putStrLn " -> "
+  return e
 
 -- lazy evaluation
-step :: TExpr -> FreshFix
-step (EApp (TA _ (EFun x _ (TA _ ebody))) (TA _ earg)) = do
-  e <- altLift $ sub x earg ebody
-  printProgress e
-step (EApp (TA t efun) earg) = do
-  efun' <- step efun
-  printProgress $ EApp (TA t efun') earg
-step (EUnfold _ (TA _ (EFold _ (TA _ e)))) = printProgress e
-step (EFold r (TA t e)) = do
-  e' <- step e
-  printProgress $ EFold r $ TA t e
-step (EUnfold r (TA t e)) = do
-  e' <- step e
-  printProgress $ EUnfold r $ TA t e
-step e = halt e
+stepWrap :: TExpr -> FreshFix
+stepWrap expr = do
+  expr' <- printFreshFix expr
+  step expr'
+  where
+    step :: TExpr -> FreshFix
+    step (EApp (TA _ (EFun x _ (TA _ ebody))) (TA _ earg)) =
+      altLift $ sub x earg ebody
+    step (EApp (TA t efun) earg) = do
+      efun' <- step efun
+      FIX.progress $ EApp (TA t efun') earg
+    step (EUnfold _ (TA _ (EFold _ (TA _ e)))) = FIX.progress e
+    step (EFold r (TA t e)) = do
+      e' <- step e
+      return $ EFold r $ TA t e'
+    step (EUnfold r (TA t e)) = do
+      e' <- step e
+      return $ EUnfold r $ TA t e'
+    step e = halt e
 
 -- steps until stuck/fixpoint
 stepStar :: TExpr -> IO TExpr
-stepStar e = ST.evalStateT (FIX.fixpoint step e) 0
+stepStar e = ST.evalStateT (FIX.fixpoint stepWrap e) 0

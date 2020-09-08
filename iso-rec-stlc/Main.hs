@@ -25,6 +25,5 @@ main = do
           putStrLn "Successfully Type-checks! :D"
           putStrLn $ "Program type: " ++ show t
           putStrLn "Evaluation: "
-          putStrLn $ show tast
           result <- E.stepStar tast
           putStrLn $ show result
