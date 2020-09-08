@@ -1,4 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
 
 module AST where
 

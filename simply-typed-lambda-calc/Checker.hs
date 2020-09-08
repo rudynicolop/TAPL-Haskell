@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
+
 module Checker(check,R(..)) where
 
 import           AST

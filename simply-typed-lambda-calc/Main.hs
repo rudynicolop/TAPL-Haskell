@@ -18,5 +18,6 @@ main = do
     Right (C.R t tast) -> do
       putStrLn "Successfully Type-checks! :D"
       putStrLn $ "Program type: " ++ show t
-      putStrLn $ show tast
-      putStrLn $ "Evaluates to: " ++ (show $ E.stepstar tast)
+      putStrLn "Evaluation: "
+      _ <- E.stepstar tast
+      putStrLn $ "Done"
