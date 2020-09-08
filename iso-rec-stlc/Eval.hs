@@ -94,20 +94,27 @@ instance MIO.MonadIO (FIX.FixT Fresh) where
       v <- MIO.liftIO a
       return (v, FIX.RunAgain)
 
+printProgress :: TExpr -> FreshFix
+printProgress e = do
+  MIO.liftIO $ putStrLn " -> "
+  MIO.liftIO $ putStrLn $ show e
+  FIX.progress e
+
 -- lazy evaluation
 step :: TExpr -> FreshFix
-step (EApp (TA _ (EFun x _ (TA _ ebody))) (TA _ earg)) = altLift $ sub x earg ebody
+step (EApp (TA _ (EFun x _ (TA _ ebody))) (TA _ earg)) = do
+  e <- altLift $ sub x earg ebody
+  printProgress e
 step (EApp (TA t efun) earg) = do
   efun' <- step efun
-  MIO.liftIO $ putStrLn $ show efun'
-  FIX.progress $ EApp (TA t efun') earg
-step (EUnfold _ (TA _ (EFold _ (TA _ e)))) = FIX.progress e
+  printProgress $ EApp (TA t efun') earg
+step (EUnfold _ (TA _ (EFold _ (TA _ e)))) = printProgress e
 step (EFold r (TA t e)) = do
   e' <- step e
-  FIX.progress $ EFold r $ TA t e
+  printProgress $ EFold r $ TA t e
 step (EUnfold r (TA t e)) = do
   e' <- step e
-  FIX.progress $ EUnfold r $ TA t e
+  printProgress $ EUnfold r $ TA t e
 step e = halt e
 
 -- steps until stuck/fixpoint

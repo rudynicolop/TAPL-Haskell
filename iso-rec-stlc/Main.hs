@@ -23,8 +23,8 @@ main = do
         Left tmsg         -> do putStrLn $ "Type-Error: " ++ tmsg
         Right (A.TA t tast) -> do
           putStrLn "Successfully Type-checks! :D"
-          putStrLn $ show tast
           putStrLn $ "Program type: " ++ show t
-          putStrLn "Program evaluates to:"
+          putStrLn "Evaluation: "
+          putStrLn $ show tast
           result <- E.stepStar tast
           putStrLn $ show result
