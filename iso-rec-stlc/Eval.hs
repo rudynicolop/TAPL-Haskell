@@ -1,8 +1,10 @@
 {-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Eval(stepStar) where
 
 import           AST
+import qualified Control.Monad.IO.Class         as MIO
 import qualified Control.Monad.Trans.Class      as MT
 import qualified Control.Monad.Trans.Fix        as FIX
 import qualified Control.Monad.Trans.State.Lazy as ST
@@ -17,7 +19,7 @@ fv (EApp (TA _ e1) (TA _ e2)) = S.union (fv e1) (fv e2)
 fv (EFold _ (TA _ e))         = fv e
 fv (EUnfold _ (TA _ e))       = fv e
 
-type Fresh = ST.State Integer
+type Fresh = ST.StateT Integer IO
 
 type FreshId = Fresh Id
 
@@ -33,7 +35,10 @@ type FreshTExpr = Fresh TExpr
 -- sub x es et substitues es for x in et
 -- sub x es et = et{es/x}
 sub :: Id -> TExpr -> TExpr -> FreshTExpr
-sub x es et = sub' et
+sub x es et = do
+  -- this is ok
+  -- MIO.liftIO $ putStrLn "j"
+  sub' et
   where
     sub' :: TExpr -> FreshTExpr
     sub' EUnit = return EUnit
@@ -63,6 +68,8 @@ sub x es et = sub' et
       e' <- sub' e
       return $ EUnfold r $ TA t e'
 
+-- type FreshIO e = IO (Fresh e)
+
 type FreshFix = FIX.FixT Fresh TExpr
 
 class (MT.MonadTrans mt) => AltMonadLift mt where
@@ -72,19 +79,27 @@ class (MT.MonadTrans mt) => AltMonadLift mt where
 instance AltMonadLift FIX.FixT where
  altLift m
   = FIX.FixT
-  $ do  v <- m
-        return (v, FIX.RunAgain)
+  $ do
+    v <- m
+    return (v, FIX.RunAgain)
 
 -- The transformers-fix library is on opposite day...
 halt :: Monad m => a -> FIX.FixT m a
 halt a
  = FIX.FixT $ return (a, FIX.NoProgress)
 
+instance MIO.MonadIO (FIX.FixT Fresh) where
+  liftIO a = FIX.FixT
+    $ do
+      v <- MIO.liftIO a
+      return (v, FIX.RunAgain)
+
 -- lazy evaluation
 step :: TExpr -> FreshFix
 step (EApp (TA _ (EFun x _ (TA _ ebody))) (TA _ earg)) = altLift $ sub x earg ebody
 step (EApp (TA t efun) earg) = do
   efun' <- step efun
+  MIO.liftIO $ putStrLn $ show efun'
   FIX.progress $ EApp (TA t efun') earg
 step (EUnfold _ (TA _ (EFold _ (TA _ e)))) = FIX.progress e
 step (EFold r (TA t e)) = do
@@ -96,5 +111,5 @@ step (EUnfold r (TA t e)) = do
 step e = halt e
 
 -- steps until stuck/fixpoint
-stepStar :: TExpr -> TExpr
-stepStar e = ST.evalState (FIX.fixpoint step e) 0
+stepStar :: TExpr -> IO TExpr
+stepStar e = ST.evalStateT (FIX.fixpoint step e) 0
