@@ -54,7 +54,7 @@ caseexpr : case expr of funexpr '|' funexpr {ECase (UA $2) (UA $4) (UA $6)}
          | pairexpr {$1}
 
 pairexpr :: {Expr UA UR}
-pairexpr : projexpr ',' projexpr {EPrd (UA $1) (UA $3)}
+pairexpr : '(' projexpr ',' projexpr ')' {EPrd (UA $2) (UA $4)}
         | projexpr {$1}
 
 projexpr :: {Expr UA UR}
@@ -74,6 +74,7 @@ appexpr : appexpr eitherexpr {EApp (UA $1) (UA $2)}
 eitherexpr :: {Expr UA UR}
 eitherexpr : Left typ unitexpr {ELeft $2 $ UA $3}
            | Right typ unitexpr {ERight $2 $ UA $3}
+           | unitexpr {$1}
 
 unitexpr :: {Expr UA UR}
 unitexpr : '()' {EUnit}

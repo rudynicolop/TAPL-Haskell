@@ -1,0 +1,14 @@
+let false = Left unit () in
+
+let true = Right unit () in
+
+let notb =
+  fn x : unit + unit =>
+    case x of fn y : unit => true | fn y : unit => false in
+
+let andb =
+  fn x : unit + unit =>
+    fn y : unit + unit =>
+      case x of fn x : unit => false | fn x : unit => y in
+
+(andb true true, andb false false)

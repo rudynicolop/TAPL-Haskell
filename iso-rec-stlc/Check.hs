@@ -32,12 +32,12 @@ check g eapp@(EApp e1 e2) = do
     checkapp (TA (TFun t11 t12) e1') (TA t2 e2')
       | alphaEq t11 t2 = return $ TA t12 $ EApp (TA (TFun t11 t12) e1') (TA t12 e2')
       | otherwise = ERR.throwError $
-        "In application " ++ (show eapp) ++ ", argument " ++ (show e2') ++
-          " is expected to have type " ++ (show t11) ++
-            ", but has type " ++ (show t2)
+        "In application " ++ (show eapp) ++ "\nargument " ++ (show e2') ++
+          "\nis expected to have type " ++ (show t11) ++
+            "\nbut has type " ++ (show t2)
     checkapp (TA t1 e1') e2' = ERR.throwError $
       "In application " ++ (show eapp) ++
-        ", expression " ++ (show e1') ++ " has type " ++ (show t1)
+        "\nexpression " ++ (show e1') ++ "\nhas type " ++ (show t1)
 check g eunfold@(EUnfold t e) =
   case gt t of
     TRec a r -> do
@@ -45,10 +45,10 @@ check g eunfold@(EUnfold t e) =
       if alphaEq t' (TRec a r)
         then return $ TA (unfold a r) $ EUnfold (TR a r) eprime
         else ERR.throwError $ "In unfold-expression " ++ (show eunfold) ++
-          ", sub-expression " ++ (show e') ++ " is expected to have type " ++
-            (show t) ++ ", but has type " ++ (show t')
+          "\nsub-expression " ++ (show e') ++ "\nis expected to have type " ++
+            (show t) ++ "\nbut has type " ++ (show t')
     wt -> ERR.throwError $ "In unfold-expression " ++ (show eunfold) ++
-        ", type argument " ++ (show wt) ++ " should be a recursive type"
+        "\ntype argument " ++ (show wt) ++ "\nshould be a recursive type."
 check g efold@(EFold t e) =
   case gt t of
     trec@(TRec a r) -> do
@@ -57,10 +57,10 @@ check g efold@(EFold t e) =
         if alphaEq t' uar
           then return $ TA trec $ EFold (TR a r) eprime
           else ERR.throwError $ "In fold-expression " ++ (show efold) ++
-            ", sub-expression " ++ (show e') ++ " is expected to have type " ++
-              (show uar) ++ ", but has type " ++ (show t')
+            "\nsub-expression " ++ (show e') ++ "\nis expected to have type " ++
+              (show uar) ++ "\nbut has type " ++ (show t')
     wt -> ERR.throwError $ "In fold-expression " ++ (show efold) ++
-        ", type argument " ++ (show wt) ++ " should be a recursive type"
+        "\ntype argument " ++ (show wt) ++ "\nshould be a recursive type."
 check g (ELet x e1 e2) = do
   e1'@(TA t1 _) <- check g $ ge e1
   e2'@(TA t2 _) <- check (M.insert x t1 g) $ ge e2
@@ -74,13 +74,13 @@ check g efst@(EFst e) = do
   case t of
     TPrd t1 t2 -> return $ TA t1 $ EFst e'
     _ -> ERR.throwError $ "In expression " ++ (show efst) ++
-      ", sub-expression " ++ (show e') ++ " has type " ++ (show t)
+      "\nsub-expression " ++ (show e') ++ "\nhas type " ++ (show t)
 check g esnd@(ESnd e) = do
   e'@(TA t _) <- check g $ ge e
   case t of
     TPrd t1 t2 -> return $ TA t2 $ ESnd e'
     _ -> ERR.throwError $ "In expression " ++ (show esnd) ++
-      ", sub-expression " ++ (show e') ++ " has type " ++ (show t)
+      "\nsub-expression " ++ (show e') ++ "\nhas type " ++ (show t)
 check g (ELeft b e) = do
   e'@(TA a _) <- check g $ ge e
   return $ TA (TSum a b) $ ELeft b e'
@@ -95,22 +95,22 @@ check g ecase@(ECase e e1 e2) = do
       e2' <- check g $ ge e2
       caseHelp a b e' e1' e2'
     _ -> ERR.throwError $ "In expression " ++ (show ecase) ++
-      ", sub-expression " ++ (show e') ++ " has type " ++ (show t)
+      "\nsub-expression " ++ (show e') ++ "\nhas type " ++ (show t)
   where
     caseHelp :: Type -> Type -> TA TExpr -> TA TExpr -> TA TExpr -> Result
     caseHelp a b e' e1'@(TA t1'@(TFun a' t1) _) e2'@(TA t2'@(TFun b' t2) _)
       | a == a' && b == b' && t1 == t2 =
         return $ TA t1 $ ECase e' e1' e2'
       | otherwise = ERR.throwError $ "In expression " ++ (show ecase) ++
-        ", sub-expression " ++ (show e1') ++ " should have type "
-          ++ (show a) ++ " -> ?, and sub-expression " ++ (show e2') ++
-            " should have type " ++ (show b) ++ " -> ?, but respectively they have types "
-              ++ (show t1') ++ " and " ++ (show t2')
+        "\nsub-expression " ++ (show e1') ++ "\nshould have type "
+          ++ (show a) ++ " -> ? \nand sub-expression " ++ (show e2') ++
+            "\nshould have type " ++ (show b) ++ " -> ? \nbut respectively they have types "
+              ++ (show t1') ++ "\nand " ++ (show t2')
     caseHelp a b e' e1'@(TA t1 _) e2'@(TA t2 _) = ERR.throwError $ "In expression "
-      ++ (show ecase) ++ ", sub-expression " ++ (show e1') ++ " should have type "
-        ++ (show a) ++ " -> ?, and sub-expression " ++ (show e2') ++
-          " should have type " ++ (show b) ++ " -> ?, but respectively they have types "
-            ++ (show t1) ++ " and " ++ (show t2)
+      ++ (show ecase) ++ "\nsub-expression " ++ (show e1') ++ "\nshould have type "
+        ++ (show a) ++ " -> ? \nand sub-expression " ++ (show e2') ++
+          "\nshould have type " ++ (show b) ++ " -> ? \nbut respectively they have types "
+            ++ (show t1) ++ "\nand " ++ (show t2)
 
 -- type variable capture-avoiding substitution
 -- invariant: type passed in is a recursive type

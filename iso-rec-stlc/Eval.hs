@@ -161,13 +161,32 @@ stepWrap expr = do
     step (ELet x (TA _ e1) (TA _ e2)) = altLift $ sub x e1 e2
     step (EPrd v1@(TA t1 e1) v2@(TA t2 e2))
       | value e1 = do
-        e1' <- step e1
-        return $ EPrd (TA t1 e1') v2
-      | otherwise = do
         e2' <- step e2
         return $ EPrd v1 $ TA t2 e2'
+      | otherwise = do
+        e1' <- step e1
+        return $ EPrd (TA t1 e1') v2
     step (EFst (TA _ (EPrd (TA _ e1) _))) = FIX.progress e1
     step (ESnd (TA _ (EPrd _ (TA _ e2)))) = FIX.progress e2
+    step (EFst (TA t e)) = do
+      e' <- step e
+      return $ EFst $ TA t e'
+    step (ESnd (TA t e)) = do
+      e' <- step e
+      return $ ESnd $ TA t e'
+    step (ELeft b (TA a e)) = do
+      e' <- step e
+      return $ ELeft b $ TA a e'
+    step (ERight a (TA b e)) = do
+      e' <- step e
+      return $ ERight a $ TA b e'
+    step (ECase (TA _ (ELeft _ e)) e1 _) =
+      FIX.progress $ EApp e1 e
+    step (ECase (TA _ (ERight _ e)) _ e2) =
+      FIX.progress $ EApp e2 e
+    step (ECase (TA t e) e1 e2) = do
+      e' <- step e
+      return $ ECase (TA t e') e1 e2
     step e = halt e
 
 -- steps until stuck/fixpoint

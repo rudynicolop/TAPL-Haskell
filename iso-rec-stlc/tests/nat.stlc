@@ -1,0 +1,14 @@
+let zero =
+  fold [mu N. unit + N]
+    Left (mu N. unit + N) () in
+
+let succ =
+  fn n : mu N. unit + N => fold [mu N. unit + N] Right unit n in
+
+let pred =
+  fn n : mu N. unit + N =>
+    case unfold [mu N. unit + N] n of
+      fn k : unit => zero
+      | fn k : mu N. unit + N => k in
+
+pred (pred (succ (succ (succ zero))))
