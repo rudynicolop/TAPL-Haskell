@@ -12,12 +12,19 @@ import qualified Data.Set                       as S
 
 -- set of free variables in an expression
 fv :: TExpr -> S.Set Id
-fv EUnit                      = S.empty
-fv (EVar (TA _ x))            = S.singleton x
-fv (EFun x _ (TA _ e))        = S.delete x $ fv e
-fv (EApp (TA _ e1) (TA _ e2)) = S.union (fv e1) (fv e2)
-fv (EFold _ (TA _ e))         = fv e
-fv (EUnfold _ (TA _ e))       = fv e
+fv EUnit                                = S.empty
+fv (EVar (TA _ x))                      = S.singleton x
+fv (EFun x _ (TA _ e))                  = S.delete x $ fv e
+fv (EApp (TA _ e1) (TA _ e2))           = S.union (fv e1) (fv e2)
+fv (EFold _ (TA _ e))                   = fv e
+fv (EUnfold _ (TA _ e))                 = fv e
+fv (ELet x (TA _ e1) (TA _ e2))         = S.union (fv e1) $ S.delete x $ fv e2
+fv (EPrd (TA _ e1) (TA _ e2))           = S.union (fv e1) (fv e2)
+fv (EFst (TA _ e))                      = fv e
+fv (ESnd (TA _ e))                      = fv e
+fv (ELeft _ (TA _ e))                   = fv e
+fv (ERight _ (TA _ e))                  = fv e
+fv (ECase (TA _ e) (TA _ e1) (TA _ e2)) = S.union (fv e) $ S.union (fv e1) (fv e2)
 
 type Fresh = ST.StateT Integer IO
 
@@ -67,8 +74,40 @@ sub x es et = do
     sub' (EUnfold r (TA t e)) = do
       e' <- sub' e
       return $ EUnfold r $ TA t e'
-
--- type FreshIO e = IO (Fresh e)
+    sub' (ELet y (TA t1 e1) exp2@(TA t2 e2)) = do
+      e1' <- sub' e1
+      if y == x
+        then return $ ELet y (TA t1 e1') exp2
+      else if not $ S.member y $ fv es
+        then do
+          e2' <- sub' e2
+          return $ ELet y (TA t1 e1') (TA t2 e2')
+        else do
+          z <- freshId
+          e2' <- sub y (EVar (TA t1 z)) e2
+          e2'' <- sub' e2'
+          return $ ELet z (TA t1 e1') (TA t2 e2'')
+    sub' (EPrd (TA t1 e1) (TA t2 e2)) = do
+      e1' <- sub' e1
+      e2' <- sub' e2
+      return $ EPrd (TA t1 e1') (TA t2 e2')
+    sub' (EFst (TA t e)) = do
+      e' <- sub' e
+      return $ EFst $ TA t e'
+    sub' (ESnd (TA t e)) = do
+      e' <- sub' e
+      return $ ESnd $ TA t e'
+    sub' (ELeft b (TA a e)) = do
+      e' <- sub' e
+      return $ ELeft b $ TA a e'
+    sub' (ERight a (TA b e)) = do
+      e' <- sub' e
+      return $ ERight a $ TA b e'
+    sub' (ECase (TA t e) (TA t1 e1) (TA t2 e2)) = do
+      e' <- sub' e
+      e1' <- sub' e1
+      e2' <- sub' e2
+      return $ ECase (TA t e') (TA t1 e1') (TA t2 e2')
 
 type FreshFix = FIX.FixT Fresh TExpr
 

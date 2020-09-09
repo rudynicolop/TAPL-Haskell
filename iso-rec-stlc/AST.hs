@@ -10,6 +10,8 @@ data Type =
   | TFun Type Type
   | TVar Id
   | TRec Id Type
+  | TPrd Type Type
+  | TSum Type Type
   deriving (Eq)
 
 instance Show Type where
@@ -17,6 +19,8 @@ instance Show Type where
   show (TFun a b) = "(" ++ (show a) ++ " -> " ++ (show b) ++ ")"
   show (TVar x)   = x
   show (TRec x t) = "(μ " ++ x ++ ". " ++ (show t) ++ ")"
+  show (TPrd a b) = "(" ++ (show a) ++ " * " ++ (show b) ++ ")"
+  show (TSum a b) = "(" ++ (show a) ++ " + " ++ (show b) ++ ")"
 
 data Expr k r =
   EUnit
@@ -25,6 +29,13 @@ data Expr k r =
   | EApp (k (Expr k r)) (k (Expr k r))
   | EFold r (k (Expr k r))
   | EUnfold r (k (Expr k r))
+  | ELet Id (k (Expr k r)) (k (Expr k r))
+  | EPrd (k (Expr k r)) (k (Expr k r))
+  | EFst (k (Expr k r))
+  | ESnd (k (Expr k r))
+  | ELeft Type (k (Expr k r))
+  | ERight Type (k (Expr k r))
+  | ECase (k (Expr k r)) (k (Expr k r)) (k (Expr k r))
 
 instance Eq (t (Expr t r)) => Eq (Expr t r) where
     (==) = (==)
@@ -89,6 +100,15 @@ instance (Annotation t, RecursiveType r, Show (t (Expr t r))) => Show (Expr t r)
   show (EApp e1 e2) = "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
   show (EFold t e) = "(fold [" ++ (show t) ++ "] " ++ (show e) ++ ")"
   show (EUnfold t e) = "(unfold [" ++ (show t) ++ "] " ++ (show e) ++ ")"
+  show (ELet x e1 e2) =
+    "(let " ++ x ++ " = " ++ (show e1) ++ " in " ++ (show e2) ++ ")"
+  show (EPrd e1 e2) = "(" ++ (show e1) ++ "," ++ (show e2) ++ ")"
+  show (EFst e) = "(fst " ++ (show e) ++  ")"
+  show (ESnd e) = "(snd " ++ (show e) ++  ")"
+  show (ELeft t e) = "(Left " ++ (show t) ++ " " ++ (show e) ++ ")"
+  show (ERight t e) = "(Right " ++ (show t) ++ " " ++ (show e) ++ ")"
+  show (ECase e e1 e2) =
+    "(case " ++ (show e) ++ " of " ++ (show e1) ++ " | " ++ (show e2) ++ ")"
 
 class AlphaEq t where
   alphaEq :: t -> t -> Bool
@@ -100,6 +120,8 @@ instance AlphaEq Type where
   alphaEq (TFun a1 b1) (TFun a2 b2) = alphaEq a1 a2 && alphaEq b1 b2
   alphaEq (TVar x1) (TVar x2)       = x1 == x2
   alphaEq (TRec a1 r1) (TRec a2 r2) = alphaEq r2 $ subvar a1 a2 r1
+  alphaEq (TPrd a1 b1) (TPrd a2 b2) = alphaEq a1 a2 && alphaEq b1 b2
+  alphaEq (TSum a1 b1) (TSum a2 b2) = alphaEq a1 a2 && alphaEq b1 b2
   alphaEq _ _                       = False
 
   subvar a1 a2 t = subvar' t
@@ -113,3 +135,5 @@ instance AlphaEq Type where
       subvar' (TRec a r)
         | a == a1 = TRec a r
         | otherwise = TRec a $ subvar' r
+      subvar' (TPrd a b) = TPrd (subvar' a) (subvar' b)
+      subvar' (TSum a b) = TSum (subvar' a) (subvar' b)
