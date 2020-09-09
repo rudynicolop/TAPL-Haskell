@@ -54,8 +54,8 @@ caseexpr : case expr of funexpr '|' funexpr {ECase (UA $2) (UA $4) (UA $6)}
          | pairexpr {$1}
 
 pairexpr :: {Expr UA UR}
-pairexpr : '(' projexpr ',' projexpr ')' {EPrd (UA $2) (UA $4)}
-        | projexpr {$1}
+pairexpr : projexpr ',' projexpr {EPrd (UA $1) (UA $3)}
+         | projexpr {$1}
 
 projexpr :: {Expr UA UR}
 projexpr : fst foldexpr {EFst $ UA $2}

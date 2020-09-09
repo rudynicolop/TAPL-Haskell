@@ -1,0 +1,21 @@
+let zero =
+  fold [mu N. unit + N]
+    Left (mu N. unit + N) () in
+
+let succ =
+  fn n : mu N. unit + N => fold [mu N. unit + N] Right unit n in
+
+let one = succ zero in
+
+let two = succ one in
+
+let nil =
+  fold [mu L. unit + (mu N. unit + N) * L]
+    Left ((mu N. unit + N) * (mu L. unit + (mu N. unit + N) * L)) () in
+
+let cons =
+  fn h : mu N. unit + N =>
+    fn t : mu L. unit + (mu N. unit + N) * L =>
+      fold [mu L. unit + (mu N. unit + N) * L] Right unit (h, t) in
+
+let lst = cons one (cons zero nil) in lst

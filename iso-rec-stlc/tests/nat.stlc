@@ -11,4 +11,6 @@ let pred =
       fn k : unit => zero
       | fn k : mu N. unit + N => k in
 
-pred (pred (succ (succ (succ zero))))
+let one = pred (pred (succ (succ (succ zero)))) in
+
+zero, one

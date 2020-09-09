@@ -1,0 +1,32 @@
+let zero =
+  fold [mu N. unit + N]
+    Left (mu N. unit + N) () in
+
+let succ =
+  fn n : mu N. unit + N => fold [mu N. unit + N] Right unit n in
+
+let one = succ zero in
+
+let two = succ one in
+
+let three = succ two in
+
+let fixnat =
+  fn f : ((mu N. unit + N) -> (mu N. unit + N))
+    -> (mu N. unit + N) -> (mu N. unit + N) =>
+    (fn x : mu A. A -> ((mu N. unit + N) -> (mu N. unit + N)) =>
+      f ((unfold [mu A. A -> ((mu N. unit + N) -> (mu N. unit + N))] x) x))
+      (fold [mu A. A -> ((mu N. unit + N) -> (mu N. unit + N))]
+        (fn x : mu A. A -> ((mu N. unit + N) -> (mu N. unit + N)) =>
+          f ((unfold [mu A. A -> ((mu N. unit + N) -> (mu N. unit + N))] x) x))) in
+
+let add = fn x : mu N. unit + N =>
+  fn y : mu N. unit + N =>
+    fixnat
+      (fn f : (mu N. unit + N) -> (mu N. unit + N) =>
+        fn x : mu N. unit + N =>
+          case unfold [mu N. unit + N] x of
+            fn z : unit => y
+            | fn k : mu N. unit + N => succ (f k)) x in
+
+add three two
