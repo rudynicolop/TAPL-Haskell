@@ -158,8 +158,27 @@ stepWrap expr = do
     step (EUnfold r (TA t e)) = do
       e' <- step e
       return $ EUnfold r $ TA t e'
+    step (ELet x (TA _ e1) (TA _ e2)) = altLift $ sub x e1 e2
+    step (EPrd v1@(TA t1 e1) v2@(TA t2 e2))
+      | value e1 = do
+        e1' <- step e1
+        return $ EPrd (TA t1 e1') v2
+      | otherwise = do
+        e2' <- step e2
+        return $ EPrd v1 $ TA t2 e2'
+    step (EFst (TA _ (EPrd (TA _ e1) _))) = FIX.progress e1
+    step (ESnd (TA _ (EPrd _ (TA _ e2)))) = FIX.progress e2
     step e = halt e
 
 -- steps until stuck/fixpoint
 stepStar :: TExpr -> IO TExpr
 stepStar e = ST.evalStateT (FIX.fixpoint stepWrap e) 0
+
+value :: TExpr -> Bool
+value EUnit                      = True
+value (EFun _ _ _)               = True
+value (EFold _ (TA _ e))         = value e
+value (EPrd (TA _ e1) (TA _ e2)) = value e1 && value e2
+value (ELeft _ (TA _ e))         = value e
+value (ERight _ (TA _ e))        = value e
+value _                          = False
