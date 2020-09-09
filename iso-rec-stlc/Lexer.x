@@ -18,12 +18,25 @@ $white+ ;
 "->" {\_ -> ARROW}
 "mu" {\_ -> MU}
 "." {\_ -> DOT}
+"*" {\_ -> PROD}
+"+" {\_ -> SUM}
 "()" {\_ -> UNIT}
 "fn" {\_ -> FUN}
 ":" {\_ -> COLON}
 "=>" {\_ -> MAPSTO}
 "fold" {\_ -> FOLD}
 "unfold" {\_ -> UNFOLD}
+"let" {\_ -> LETL}
+"=" {\_ -> EQL}
+"in" {\_ -> INL}
+"," {\_ -> COMMA}
+"fst" {\_ -> FST}
+"snd" {\_ -> SND}
+"Left" {\_ -> LEFTS}
+"Right" {\_ -> RIGHTS}
+"case" {\_ -> CASEC}
+"of" {\_ -> OFC}
+"|" {\_ -> MIDC}
 "[" {\_ -> LBRACK}
 "]" {\_ -> RBRACK}
 "(" {\_ -> LPAREN}
@@ -38,11 +51,24 @@ data Token =
   | UNIT -- unit value
   | MU -- recursive type binder
   | DOT -- recursive type syntax
+  | PROD -- product type
+  | SUM -- sum type
   | FUN -- fun keyword
   | COLON -- has type colon
   | MAPSTO -- => token
   | FOLD -- recursive type fold
   | UNFOLD -- recursive type unfold
+  | LETL -- let
+  | EQL -- =
+  | INL -- in
+  | COMMA -- (e1,e2)
+  | FST
+  | SND
+  | LEFTS
+  | RIGHTS
+  | CASEC -- case e of e1 | e2
+  | OFC
+  | MIDC
   | LBRACK
   | RBRACK
   | LPAREN
